@@ -1,0 +1,62 @@
+{
+  "defaultAction": "SCMP_ACT_ERRNO",
+  "architectures": ["SCMP_ARCH_X86_64", "SCMP_ARCH_X86", "SCMP_ARCH_X32"],
+  "syscalls": [
+    {
+      "names": [
+        "read", "write", "readv", "writev", "pread64", "pwrite64",
+        "open", "openat", "openat2", "close", "fstat", "stat", "lstat",
+        "newfstatat", "statx",
+        "lseek", "mmap", "mprotect", "munmap", "brk", "mremap",
+        "madvise", "mincore", "mlock", "mlock2", "munlock",
+        "rt_sigaction", "rt_sigprocmask", "rt_sigreturn", "rt_sigsuspend",
+        "sigaltstack", "sigreturn",
+        "ioctl",
+        "access", "faccessat", "faccessat2",
+        "pipe", "pipe2", "dup", "dup2", "dup3",
+        "select", "pselect6", "poll", "ppoll", "epoll_create", "epoll_create1",
+        "epoll_ctl", "epoll_wait", "epoll_pwait", "epoll_pwait2",
+        "socket", "connect", "accept", "sendto", "recvfrom",
+        "sendmsg", "recvmsg", "shutdown", "getsockname", "getpeername",
+        "getsockopt", "setsockopt",
+        "exit", "exit_group",
+        "getpid", "getppid", "gettid", "getuid", "getgid", "geteuid", "getegid",
+        "getgroups", "getpgrp", "getpgid", "getsid",
+        "getrlimit", "setrlimit", "getrusage", "times",
+        "uname", "arch_prctl", "prctl",
+        "getcwd", "chdir",
+        "readlink", "readlinkat",
+        "mkdir", "mkdirat", "rmdir",
+        "rename", "renameat", "renameat2",
+        "unlink", "unlinkat",
+        "chmod", "fchmod", "fchmodat",
+        "nanosleep", "clock_nanosleep", "clock_gettime", "clock_getres",
+        "getitimer", "setitimer", "alarm",
+        "wait4", "waitid",
+        "execve", "execveat",
+        "futex", "set_robust_list", "get_robust_list",
+        "set_tid_address",
+        "sched_yield", "sched_getaffinity", "sched_setaffinity",
+        "sched_getparam", "sched_getscheduler", "sched_setscheduler",
+        "tgkill", "kill", "tkill",
+        "capget",
+        "getrandom",
+        "memfd_create",
+        "rseq"
+      ],
+      "action": "SCMP_ACT_ALLOW"
+    },
+    {
+      "names": ["clone"],
+      "action": "SCMP_ACT_ALLOW",
+      "args": [
+        {
+          "index": 0,
+          "value": 2114060288,
+          "op": "SCMP_CMP_MASKED_EQ"
+        }
+      ],
+      "comment": "Allow clone for threads only (CLONE_THREAD | CLONE_SIGHAND | CLONE_VM), not new namespaces"
+    }
+  ]
+}
