@@ -1,0 +1,25 @@
+$kind: collection
+name: RCE Online Judge API
+description: |-
+  API collection for the Remote Code Execution & Online Judge platform.
+  
+  ## Authentication
+  Most endpoints require a Bearer token obtained via /api/auth/login or /api/auth/social.
+  
+  ## Modules
+  - **Auth**: User signup, login, email verification, social auth
+  - **Problems**: Fetch problem details and sample test cases
+  - **Submissions**: Submit code and check submission status
+  - **WebSocket**: Real-time submission result delivery
+variables:
+  - key: baseUrl
+    value: 'http://localhost:8000'
+    description: Base URL for the API server
+  - key: token
+    value: ''
+    description: JWT access token (obtained from login)
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'

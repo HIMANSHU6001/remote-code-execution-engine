@@ -1,7 +1,7 @@
 [project]
-name = "rce-online-judge"
+name = "leetcode-clone"
 version = "1.0.0"
-description = "Highly secure, asynchronous Remote Code Execution engine and Online Judge"
+description = "Backend for LeetCode Clone"
 requires-python = ">=3.10"
 
 dependencies = [
@@ -11,6 +11,7 @@ dependencies = [
     # Auth
     "PyJWT>=2.8.0",
     "passlib[bcrypt]>=1.7.4",
+    "bcrypt<5",
     "email-validator>=2.1.0",
     "resend>=2.4.0",
     # Database (async for FastAPI, sync for Celery)

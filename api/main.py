@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.routes import auth, problems, submissions, submit
 from api.websocket import router as ws_router
 from config.settings import get_allowed_origins
-
+from api.routes import health
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,6 +38,8 @@ def create_app() -> FastAPI:
     app.include_router(problems.router, tags=["problems"])
     app.include_router(auth.router, tags=["auth"], prefix="/api/auth")
     app.include_router(ws_router, tags=["websocket"])
+    app.include_router(health.router, tags=["health"])
+    
 
     return app
 

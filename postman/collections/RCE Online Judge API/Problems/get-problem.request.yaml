@@ -1,0 +1,14 @@
+$kind: http-request
+name: Get Problem
+method: GET
+url: '{{baseUrl}}/problems/:problem_id'
+order: 1000
+pathVariables:
+  - key: problem_id
+    value: '00000000-0000-0000-0000-000000000001'
+    description: UUID of the problem to fetch
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'

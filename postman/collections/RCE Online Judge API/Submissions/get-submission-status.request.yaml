@@ -1,0 +1,14 @@
+$kind: http-request
+name: Get Submission Status
+method: GET
+url: '{{baseUrl}}/submissions/:job_id'
+order: 2000
+pathVariables:
+  - key: job_id
+    value: '{{job_id}}'
+    description: UUID of the submission job
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'

@@ -39,7 +39,6 @@ async def submit_code(
     # 5. Rate limiting (token bucket + sliding window)
     await apply_rate_limits(user_id)
 
-    # Persist submission row (status=pending)
     job_id = uuid.uuid4()
     await create_submission(
         db,

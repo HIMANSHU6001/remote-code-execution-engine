@@ -1,0 +1,25 @@
+$kind: collection
+name: Submissions
+description: |-
+  Endpoints for submitting code and checking submission status.
+  
+  ## Supported Languages
+  - python
+  - cpp
+  - java
+  - nodejs
+  
+  ## Submission Flow
+  1. POST /submit - Submit code (returns job_id)
+  2. GET /submissions/{job_id} - Poll for status
+  3. Or use WebSocket /ws/{job_id} for real-time updates
+  
+  ## Verdicts
+  - ACC: Accepted
+  - WA: Wrong Answer
+  - TLE: Time Limit Exceeded
+  - MLE: Memory Limit Exceeded
+  - RE: Runtime Error
+  - CE: Compilation Error
+  - IE: Internal Error
+order: 3000

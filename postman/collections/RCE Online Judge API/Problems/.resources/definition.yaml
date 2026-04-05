@@ -1,0 +1,7 @@
+$kind: collection
+name: Problems
+description: |-
+  Endpoints for fetching problem details and sample test cases.
+  
+  Note: Hidden test cases (is_sample=False) are never returned via the API.
+order: 2000

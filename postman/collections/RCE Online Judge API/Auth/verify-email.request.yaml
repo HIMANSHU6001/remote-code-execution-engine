@@ -1,0 +1,9 @@
+$kind: http-request
+name: Verify Email
+method: GET
+url: '{{baseUrl}}/api/auth/verify'
+order: 2000
+queryParams:
+  - key: token
+    value: 'your-verification-token'
+    description: Verification token received via email

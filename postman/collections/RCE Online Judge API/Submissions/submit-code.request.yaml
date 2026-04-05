@@ -1,0 +1,29 @@
+$kind: http-request
+name: Submit Code
+method: POST
+url: '{{baseUrl}}/submit'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+body:
+  type: json
+  content: |-
+    {
+      "problem_id": "00000000-0000-0000-0000-000000000001",
+      "language": "python",
+      "code": "def solution(n):\n    return n * 2\n\nprint(solution(int(input())))"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      if (pm.response.code === 202) {
+          const jsonData = pm.response.json();
+          pm.collectionVariables.set("job_id", jsonData.job_id);
+      }
