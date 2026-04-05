@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     # PostgreSQL
     DATABASE_URL: str  # asyncpg DSN  e.g. postgresql+asyncpg://user:pass@localhost/rce
@@ -17,6 +17,22 @@ class Settings(BaseSettings):
     # Auth
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_TTL_SECONDS: int = 86_400
+
+    # Server-to-server auth (Next.js -> FastAPI)
+    S2S_JWT_SECRET: str
+    S2S_JWT_ALGORITHM: str = "HS256"
+    S2S_JWT_ISSUER: str = "nextjs-auth"
+    S2S_JWT_AUDIENCE: str = "fastapi-social"
+
+    # Frontend/CORS
+    ALLOWED_ORIGINS: str = "http://localhost:3000"
+
+    # Email verification
+    VERIFICATION_TOKEN_TTL_SECONDS: int = 86_400
+    VERIFY_EMAIL_BASE_URL: str = "http://localhost:3000/verify-email"
+    RESEND_API_KEY: str | None = None
+    RESEND_FROM_EMAIL: str | None = None
 
     # Sandbox
     SANDBOX_BASE_DIR: str = "/sandbox/jobs"
@@ -43,3 +59,7 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
+
+
+def get_allowed_origins() -> list[str]:
+    return [origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",") if origin.strip()]

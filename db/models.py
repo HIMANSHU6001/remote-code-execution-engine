@@ -10,6 +10,7 @@ from sqlalchemy import (
     Integer,
     Numeric,
     Text,
+    UniqueConstraint,
     text,
 )
 from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
@@ -23,13 +24,46 @@ class User(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
-    password_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    password_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("FALSE"))
+    verification_token_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
+    verification_token_expires_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     role: Mapped[str] = mapped_column(Text, nullable=False, server_default="user")
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()"))
     updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()"))
 
+    oauth_accounts: Mapped[list["OAuthAccount"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
     __table_args__ = (
         CheckConstraint("role IN ('user', 'admin', 'problem_setter')", name="chk_user_role"),
+        Index("idx_users_verification_token_hash", "verification_token_hash"),
+    )
+
+
+class OAuthAccount(Base):
+    __tablename__ = "oauth_accounts"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    provider: Mapped[str] = mapped_column(Text, nullable=False)
+    provider_account_id: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()"))
+    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()"))
+
+    user: Mapped[User] = relationship(back_populates="oauth_accounts")
+
+    __table_args__ = (
+        UniqueConstraint("provider", "provider_account_id", name="uq_oauth_provider_account"),
+        UniqueConstraint("user_id", "provider", name="uq_oauth_user_provider"),
+        Index("idx_oauth_user_id", "user_id"),
     )
 
 

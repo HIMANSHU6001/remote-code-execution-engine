@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from pydantic import UUID4, BaseModel, field_validator
+from pydantic import UUID4, BaseModel, EmailStr, field_validator
 
 from shared.enums import Language, SubmissionStatus, Verdict
 
@@ -93,3 +93,70 @@ class WSErrorPayload(BaseModel):
 class ErrorResponse(BaseModel):
     error: str
     detail: str | None = None
+
+
+# ---------------------------------------------------------------------------
+# Auth inbound
+# ---------------------------------------------------------------------------
+
+class SignupRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+    @field_validator("password")
+    @classmethod
+    def password_strength(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("password must be at least 8 characters")
+        return v
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class SocialAuthRequest(BaseModel):
+    email: EmailStr
+    name: str | None = None
+    provider: str
+    provider_account_id: str
+
+    @field_validator("provider")
+    @classmethod
+    def provider_non_empty(cls, v: str) -> str:
+        cleaned = v.strip().lower()
+        if not cleaned:
+            raise ValueError("provider must be non-empty")
+        return cleaned
+
+    @field_validator("provider_account_id")
+    @classmethod
+    def provider_account_id_non_empty(cls, v: str) -> str:
+        cleaned = v.strip()
+        if not cleaned:
+            raise ValueError("provider_account_id must be non-empty")
+        return cleaned
+
+
+# ---------------------------------------------------------------------------
+# Auth outbound
+# ---------------------------------------------------------------------------
+
+class SignupResponse(BaseModel):
+    user_id: uuid.UUID
+    message: str
+
+
+class VerifyEmailResponse(BaseModel):
+    message: str
+
+
+class AuthTokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+
+
+class SocialAuthResponse(AuthTokenResponse):
+    user_id: uuid.UUID
