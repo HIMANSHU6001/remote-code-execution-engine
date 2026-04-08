@@ -24,7 +24,7 @@ Submissions are sandboxed inside rootless Docker containers with seccomp allowli
 
 ## Architecture
 
-```
+```text
 Client
   │── POST /submit ─────────────────► FastAPI Gateway
   │◄── 202 { job_id } ───────────────┤
@@ -36,7 +36,7 @@ Client
 ```
 
 | Component | Technology | Role |
-|---|---|---|
+| --- | --- | --- |
 | API Gateway | FastAPI | HTTP endpoints, WebSocket hub, rate limiting, auth |
 | Message Broker | Redis DB 0 | Celery task queue, Pub/Sub result delivery, rate-limit counters |
 | Result Backend | Redis DB 1 | Celery result backend |
@@ -63,7 +63,7 @@ Client
 
 ## Project Structure
 
-```
+```text
 .
 ├── api/                    # FastAPI process
 │   ├── main.py             # App factory and router mounts
@@ -133,7 +133,7 @@ Client
 ## Prerequisites
 
 | Tool | Minimum Version | Notes |
-|---|---|---|
+| --- | --- | --- |
 | Python | 3.10 | Use pyenv or system Python |
 | Docker | 24.x | Rootless mode required for the worker in production; standard mode fine for local dev |
 | PostgreSQL | 16 | Provided via docker-compose |
@@ -227,6 +227,7 @@ celery -A worker.app beat --loglevel=info
 ```
 
 Beat runs two periodic tasks:
+
 - `sweep_zombies` — every 60 s: marks stuck `running` submissions as `IE`
 - `sweep_sandbox_dirs` — every 10 min: removes stale `/sandbox/jobs/*` directories
 
@@ -238,6 +239,17 @@ docker-compose up --build
 
 > Note: The `worker` service in docker-compose needs access to the Docker socket and the sandbox volume. Review `docker-compose.yml` and adjust the socket path to match your system before using this in production.
 
+### Production Docker images
+
+Use dedicated production Dockerfiles to avoid dev dependencies and reload mode:
+
+```bash
+docker build -f Dockerfile.api.prod -t rce-api:prod .
+docker build -f Dockerfile.worker.prod -t rce-worker:prod .
+```
+
+`Dockerfile.api` and `Dockerfile.worker` remain optimized for local development.
+
 ---
 
 ## Environment Variables
@@ -245,7 +257,7 @@ docker-compose up --build
 All variables are read via `config/settings.py` (Pydantic BaseSettings). See `.env.example` for the full list.
 
 | Variable | Default | Description |
-|---|---|---|
+| --- | --- | --- |
 | `DATABASE_URL` | — | Async PostgreSQL DSN (`postgresql+asyncpg://...`) |
 | `SYNC_DATABASE_URL` | — | Sync PostgreSQL DSN (`postgresql+psycopg2://...`) |
 | `REDIS_URL` | `redis://localhost:6379/0` | Broker, pub/sub, rate-limit counters |
@@ -267,13 +279,29 @@ All variables are read via `config/settings.py` (Pydantic BaseSettings). See `.e
 
 ## API Reference
 
-All endpoints require a JWT Bearer token: `Authorization: Bearer <token>`.
+Most endpoints require a JWT Bearer token: `Authorization: Bearer <token>`.
+
+Public auth endpoints:
+
+- `POST /api/auth/signup`
+- `GET /api/auth/verify?token=...`
+- `POST /api/auth/login`
+
+Service-auth endpoint (requires S2S Bearer token):
+
+- `POST /api/auth/social`
+
+Health endpoints:
+
+- `GET /health` and `GET /health/live` (liveness)
+- `GET /health/ready` (readiness: DB + Redis checks)
 
 ### `POST /submit`
 
 Submit code for evaluation.
 
 **Request body:**
+
 ```json
 {
   "problem_id": "uuid",
@@ -283,6 +311,7 @@ Submit code for evaluation.
 ```
 
 **Response `202`:**
+
 ```json
 { "job_id": "uuid" }
 ```
@@ -296,6 +325,7 @@ Submit code for evaluation.
 Poll submission status. Returns `status: "running"` with null verdict fields while in progress.
 
 **Response `200`:**
+
 ```json
 {
   "job_id": "uuid",
@@ -317,7 +347,8 @@ Poll submission status. Returns `status: "running"` with null verdict fields whi
 Real-time result delivery. The JWT is passed as a query parameter (browser WebSocket limitation).
 
 **Message sequence:**
-```
+
+```text
 server → { "type": "ack",    "job_id": "..." }
 server → { "type": "ping" }                        # every 20 s
 server → { "type": "result", "job_id": "...", "verdict": "ACC", ... }
@@ -333,6 +364,7 @@ Connection times out after 90 s. Recover by polling `GET /submissions/{job_id}`.
 Fetch problem details and **sample** test cases. Hidden test cases are never returned.
 
 **Response `200`:**
+
 ```json
 {
   "id": "uuid",
@@ -377,7 +409,7 @@ curl -s http://localhost:8000/submissions/<job_id> \
 ## Verdict Reference
 
 | Verdict | Meaning |
-|---|---|
+| --- | --- |
 | `ACC` | Accepted — all test cases passed |
 | `WA` | Wrong Answer |
 | `TLE` | Time Limit Exceeded (GNU `timeout` exit code 124) |
@@ -393,6 +425,7 @@ curl -s http://localhost:8000/submissions/<job_id> \
 1. **Create a Dockerfile** in `docker/<lang>/Dockerfile`. Follow the existing pattern: `debian:bookworm-slim` base, install runtime + `coreutils` (for GNU `timeout`), create `runner` user UID `10001`.
 
 2. **Register the runner config** in `worker/runners.py`:
+
    ```python
    Language.YOURLANG: RunnerConfig(
        source_file="solution.ext",
@@ -407,6 +440,7 @@ curl -s http://localhost:8000/submissions/<job_id> \
 4. **Add a DB migration** for the new enum value in `language_enum` in PostgreSQL.
 
 5. **Build the image:**
+
    ```bash
    docker build -t rce-yourlang:latest docker/yourlang/
    ```

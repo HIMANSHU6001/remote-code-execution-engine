@@ -1,0 +1,14 @@
+FROM python:3.11-slim-bookworm
+
+# Install Docker CLI so the worker can run sandbox containers via socket
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        docker.io \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY . .
+RUN pip install --no-cache-dir -e .
+
+CMD ["celery", "-A", "worker.app", "worker", "--loglevel=info", "--concurrency=2"]

@@ -4,6 +4,10 @@ values:
     value: 'http://localhost:8000'
     enabled: true
     type: default
+  - key: wsBaseUrl
+    value: 'ws://localhost:8000'
+    enabled: true
+    type: default
   - key: token
     value: ''
     enabled: true

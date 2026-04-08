@@ -4,6 +4,10 @@ values:
     value: 'https://api.your-domain.com'
     enabled: true
     type: default
+  - key: wsBaseUrl
+    value: 'wss://api.your-domain.com'
+    enabled: true
+    type: default
   - key: token
     value: ''
     enabled: true

@@ -1,0 +1,13 @@
+$kind: websocket-request
+name: Submission Updates (WebSocket)
+url: '{{wsBaseUrl}}/ws/{{job_id}}?token={{token}}'
+order: 3000
+description: |-
+  Real-time submission result delivery.
+
+  Flow:
+  1. Submit code via POST /submit to populate {{job_id}}
+  2. Ensure {{token}} contains a valid JWT
+  3. Connect and wait for ack/ping/result messages
+
+  The API sends periodic ping frames and closes after the final result.

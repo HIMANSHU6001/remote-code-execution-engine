@@ -1,5 +1,0 @@
-$kind: http-request
-name: API
-url: http://localhost:3000/health
-method: GET
-order: 1301829789198

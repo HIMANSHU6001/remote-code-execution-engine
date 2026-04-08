@@ -15,6 +15,9 @@ variables:
   - key: baseUrl
     value: 'http://localhost:8000'
     description: Base URL for the API server
+  - key: wsBaseUrl
+    value: 'ws://localhost:8000'
+    description: Base WebSocket URL for real-time submission updates
   - key: token
     value: ''
     description: JWT access token (obtained from login)

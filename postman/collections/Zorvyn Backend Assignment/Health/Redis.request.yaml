@@ -1,6 +1,0 @@
-$kind: http-request
-name: Redis
-url: |
-  http://localhost:3000/health/redis
-method: GET
-order: 1775100241428
