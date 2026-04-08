@@ -37,6 +37,9 @@ dev = [
     "httpx>=0.27.0",            # async test client for FastAPI
 ]
 
+[project.scripts]
+generate-erd = "scripts.generate_erd_svg:main"
+
 [tool.ruff]
 target-version = "py310"
 line-length = 100
@@ -56,7 +59,7 @@ testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["api*", "auth*", "config*", "db*", "rate_limit*", "shared*", "worker*"]
+include = ["api*", "auth*", "config*", "db*", "rate_limit*", "scripts*", "shared*", "worker*"]
 
 [build-system]
 requires = ["setuptools>=68"]

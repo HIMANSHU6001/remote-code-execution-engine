@@ -1,0 +1,91 @@
+paths:
+  /api/auth/verify:
+    get:
+      x-fern-examples:
+        - query-parameters:
+            token: a1b2c3d4e5f6g7h8i9j0
+          response:
+            body:
+              message: Email verification successful. Your account is now activated.
+  /submissions/job_id:
+    get:
+      x-fern-examples:
+        - path-parameters:
+            job_id: job_id
+          response:
+            body:
+              job_id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+              status: completed
+              verdict: ACC
+              execution_time_ms: 123
+              memory_used_mb: 64.5
+              stdout_snippet: Output matches expected results.
+              stderr_snippet: ''
+  /api/auth/signup:
+    post:
+      x-fern-examples:
+        - request:
+            email: jane.doe@example.com
+            password: SecurePass123!
+          response:
+            body:
+              user_id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+              message: User account created successfully. Verification email has been sent.
+  /api/auth/login:
+    post:
+      x-fern-examples:
+        - request:
+            email: user@example.com
+            password: SecurePass123!
+          response:
+            body:
+              access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+              token_type: bearer
+              expires_in: 3600
+  /submit:
+    post:
+      x-fern-examples:
+        - request:
+            problem_id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+            language: python
+            code: |-
+              def solve():
+                  n = int(input())
+                  print(n * 2)
+
+              if __name__ == '__main__':
+                  solve()
+          response:
+            body:
+              job_id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+  /problems/problem_id:
+    get:
+      x-fern-examples:
+        - path-parameters:
+            problem_id: problem_id
+          response:
+            body:
+              id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+              title: Sum of Two Numbers
+              base_time_limit_ms: 1000
+              base_memory_limit_mb: 256
+              sample_test_cases:
+                - id: 1c6b147a-8f3e-4d2a-9f3a-2b7e4d9a1f3c
+                  input_data: |
+                    3 5
+                  expected_output: |
+                    8
+                  is_sample: true
+  /api/auth/social:
+    post:
+      x-fern-examples:
+        - request:
+            email: jane.doe@example.com
+            provider: google
+            provider_account_id: google-oauth2|123456789012345678901
+          response:
+            body:
+              access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.SGVsbG8gV29ybGQ=.dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+              token_type: bearer
+              expires_in: 3600
+              user_id: 3fa85f64-5717-4562-b3fc-2c963f66afa6

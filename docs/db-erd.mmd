@@ -1,0 +1,66 @@
+erDiagram
+
+    OAUTH_ACCOUNTS {
+      UUID id PK
+      UUID user_id FK
+      TEXT provider
+      TEXT provider_account_id
+      TIMESTAMP created_at
+      TIMESTAMP updated_at
+    }
+
+    PROBLEMS {
+      UUID id PK
+      TEXT title
+      TEXT description
+      INTEGER base_time_limit_ms
+      INTEGER base_memory_limit_mb
+      UUID created_by FK
+      TIMESTAMP created_at
+      TIMESTAMP updated_at
+    }
+
+    SUBMISSIONS {
+      UUID id PK
+      UUID user_id FK
+      UUID problem_id FK
+      TEXT language
+      TEXT code
+      TEXT status
+      TEXT verdict
+      INTEGER execution_time_ms
+      NUMERIC_8_2 memory_used_mb
+      TEXT stdout_snippet
+      TEXT stderr_snippet
+      TIMESTAMP created_at
+      TIMESTAMP updated_at
+    }
+
+    TEST_CASES {
+      UUID id PK
+      UUID problem_id FK
+      TEXT input_data
+      TEXT expected_output
+      BOOLEAN is_sample
+      INTEGER ordering
+      TIMESTAMP created_at
+    }
+
+    USERS {
+      UUID id PK
+      TEXT email UK
+      TEXT name
+      TEXT password_hash
+      BOOLEAN is_verified
+      TEXT verification_token_hash
+      TIMESTAMP verification_token_expires_at
+      TEXT role
+      TIMESTAMP created_at
+      TIMESTAMP updated_at
+    }
+
+    PROBLEMS ||--o{ SUBMISSIONS : problem_id
+    PROBLEMS ||--o{ TEST_CASES : problem_id
+    USERS ||--o{ OAUTH_ACCOUNTS : user_id
+    USERS ||--o{ PROBLEMS : created_by
+    USERS ||--o{ SUBMISSIONS : user_id

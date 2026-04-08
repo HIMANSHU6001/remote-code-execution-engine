@@ -17,9 +17,10 @@ Submissions are sandboxed inside rootless Docker containers with seccomp allowli
 7. [Environment Variables](#environment-variables)
 8. [API Reference](#api-reference)
 9. [Fern Documentation and SDKs](#fern-documentation-and-sdks)
-10. [Quick Test with curl](#quick-test-with-curl)
-11. [Adding a New Language](#adding-a-new-language)
-12. [Code Style](#code-style)
+10. [Database ERD Generation](#database-erd-generation)
+11. [Quick Test with curl](#quick-test-with-curl)
+12. [Adding a New Language](#adding-a-new-language)
+13. [Code Style](#code-style)
 
 ---
 
@@ -384,6 +385,10 @@ Fetch problem details and **sample** test cases. Hidden test cases are never ret
 
 Fern is configured in the `fern/` directory and uses `fern/openapi.yml` as the API contract.
 
+Hosted docs endpoint:
+
+- https://rce-docs.docs.buildwithfern.com
+
 ### Install Fern CLI
 
 ```bash
@@ -412,6 +417,27 @@ Generated SDK outputs:
 
 - HTTP endpoints are modeled in OpenAPI and used by Fern for SDK generation.
 - WebSocket behavior (`WS /ws/{job_id}`) is intentionally documented in markdown/API reference prose and not modeled as an OpenAPI path.
+
+---
+
+## Database ERD Generation
+
+Generate the latest ERD from SQLAlchemy models and overwrite the SVG:
+
+```bash
+uv run generate-erd
+```
+
+Outputs:
+
+- `docs/db-erd.mmd`
+- `docs/ERD.svg`
+
+Equivalent direct script command:
+
+```bash
+python scripts/generate_erd_svg.py
+```
 
 ---
 

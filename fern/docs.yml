@@ -1,0 +1,9 @@
+instances:
+  - url: https://rce-docs.docs.buildwithfern.com
+title: Rce Docs | Documentation
+navigation:
+  - api: API Reference
+    paginated: true
+colors:
+  accentPrimary: '#ffffff'
+  background: '#000000'
