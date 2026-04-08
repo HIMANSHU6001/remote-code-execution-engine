@@ -16,9 +16,10 @@ Submissions are sandboxed inside rootless Docker containers with seccomp allowli
 6. [Running the Services](#running-the-services)
 7. [Environment Variables](#environment-variables)
 8. [API Reference](#api-reference)
-9. [Quick Test with curl](#quick-test-with-curl)
-10. [Adding a New Language](#adding-a-new-language)
-11. [Code Style](#code-style)
+9. [Fern Documentation and SDKs](#fern-documentation-and-sdks)
+10. [Quick Test with curl](#quick-test-with-curl)
+11. [Adding a New Language](#adding-a-new-language)
+12. [Code Style](#code-style)
 
 ---
 
@@ -376,6 +377,41 @@ Fetch problem details and **sample** test cases. Hidden test cases are never ret
   ]
 }
 ```
+
+---
+
+## Fern Documentation and SDKs
+
+Fern is configured in the `fern/` directory and uses `fern/openapi.yml` as the API contract.
+
+### Install Fern CLI
+
+```bash
+npm install -g fern-api
+```
+
+### Validate Fern configuration
+
+```bash
+cd fern
+fern check
+```
+
+### Generate SDKs locally
+
+```bash
+cd fern
+fern generate --group local
+```
+
+Generated SDK outputs:
+
+- `sdks/typescript`
+
+### Notes
+
+- HTTP endpoints are modeled in OpenAPI and used by Fern for SDK generation.
+- WebSocket behavior (`WS /ws/{job_id}`) is intentionally documented in markdown/API reference prose and not modeled as an OpenAPI path.
 
 ---
 

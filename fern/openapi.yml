@@ -1,0 +1,563 @@
+openapi: 3.0.3
+info:
+  title: RCE Online Judge API
+  version: 1.0.0
+  description: |
+    Public API for the RCE online judge backend.
+
+    This API supports signup/login/social auth, code submission, status polling,
+    problem fetch, and health checks.
+
+    Note: WebSocket updates are documented in markdown docs, not OpenAPI paths.
+servers:
+  - url: http://localhost:8000
+    description: Local development
+tags:
+  - name: auth
+    description: Account and token workflows
+  - name: submissions
+    description: Code submission and status polling
+  - name: problems
+    description: Problem metadata and sample testcases
+  - name: health
+    description: Liveness and readiness probes
+paths:
+  /api/auth/signup:
+    post:
+      tags: [auth]
+      summary: Create a user account
+      operationId: signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupRequest"
+      responses:
+        "201":
+          description: User created and verification email queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignupResponse"
+        "409":
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetail"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /api/auth/verify:
+    get:
+      tags: [auth]
+      summary: Verify user email
+      operationId: verifyEmail
+      parameters:
+        - name: token
+          in: query
+          required: true
+          description: Verification token sent via email
+          schema:
+            type: string
+            minLength: 10
+      responses:
+        "200":
+          description: Email verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyEmailResponse"
+        "400":
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetail"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /api/auth/login:
+    post:
+      tags: [auth]
+      summary: Authenticate with email and password
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokenResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetail"
+        "403":
+          description: Email not verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetail"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /api/auth/social:
+    post:
+      tags: [auth]
+      summary: Authenticate via S2S trusted provider flow
+      operationId: socialAuth
+      security:
+        - s2sBearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SocialAuthRequest"
+      responses:
+        "200":
+          description: Authenticated/created social user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SocialAuthResponse"
+        "401":
+          description: Invalid S2S token or claim mismatch
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetail"
+        "409":
+          description: Provider already linked to another account id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetail"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /submit:
+    post:
+      tags: [submissions]
+      summary: Submit code for asynchronous evaluation
+      operationId: submitCode
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitRequest"
+      responses:
+        "202":
+          description: Submission accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmitResponse"
+        "401":
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetail"
+        "404":
+          description: Problem not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetail"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetail"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /submissions/{job_id}:
+    get:
+      tags: [submissions]
+      summary: Get submission status
+      operationId: getSubmissionStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Submission status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmissionDetailResponse"
+        "401":
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetail"
+        "403":
+          description: Access denied (not owner)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetail"
+        "404":
+          description: Submission not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetail"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /problems/{problem_id}:
+    get:
+      tags: [problems]
+      summary: Get problem metadata and sample testcases
+      operationId: getProblem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: problem_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Problem fetched
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemResponse"
+        "401":
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetail"
+        "404":
+          description: Problem not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetail"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /health:
+    get:
+      tags: [health]
+      summary: Liveness check
+      operationId: health
+      responses:
+        "200":
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthLiveResponse"
+
+  /health/ready:
+    get:
+      tags: [health]
+      summary: Readiness check (DB and Redis)
+      operationId: healthReady
+      responses:
+        "200":
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthReadyResponse"
+        "503":
+          description: Service is degraded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthReadyResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    s2sBearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: S2S token issued by Next.js auth service
+  schemas:
+    SubmitRequest:
+      type: object
+      required: [problem_id, language, code]
+      properties:
+        problem_id:
+          type: string
+          format: uuid
+        language:
+          $ref: "#/components/schemas/Language"
+        code:
+          type: string
+          maxLength: 65536
+
+    SubmitResponse:
+      type: object
+      required: [job_id]
+      properties:
+        job_id:
+          type: string
+          format: uuid
+
+    SubmissionDetailResponse:
+      type: object
+      required: [job_id, status]
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/SubmissionStatus"
+        verdict:
+          allOf:
+            - $ref: "#/components/schemas/Verdict"
+          nullable: true
+        execution_time_ms:
+          type: integer
+          nullable: true
+        memory_used_mb:
+          type: number
+          format: float
+          nullable: true
+        stdout_snippet:
+          type: string
+          nullable: true
+        stderr_snippet:
+          type: string
+          nullable: true
+
+    ProblemSampleTestCase:
+      type: object
+      required: [id, input_data, expected_output, is_sample]
+      properties:
+        id:
+          type: string
+          format: uuid
+        input_data:
+          type: string
+        expected_output:
+          type: string
+        is_sample:
+          type: boolean
+
+    ProblemResponse:
+      type: object
+      required:
+        - id
+        - title
+        - base_time_limit_ms
+        - base_memory_limit_mb
+        - sample_test_cases
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        base_time_limit_ms:
+          type: integer
+        base_memory_limit_mb:
+          type: integer
+        sample_test_cases:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProblemSampleTestCase"
+
+    SignupRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    SocialAuthRequest:
+      type: object
+      required: [email, provider, provider_account_id]
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          nullable: true
+        provider:
+          type: string
+          minLength: 1
+        provider_account_id:
+          type: string
+          minLength: 1
+
+    SignupResponse:
+      type: object
+      required: [user_id, message]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+
+    VerifyEmailResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    AuthTokenResponse:
+      type: object
+      required: [access_token, token_type, expires_in]
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          default: bearer
+        expires_in:
+          type: integer
+
+    SocialAuthResponse:
+      allOf:
+        - $ref: "#/components/schemas/AuthTokenResponse"
+        - type: object
+          required: [user_id]
+          properties:
+            user_id:
+              type: string
+              format: uuid
+
+    HealthLiveResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          example: ok
+
+    HealthReadyResponse:
+      type: object
+      required: [status, checks]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        checks:
+          type: object
+          additionalProperties:
+            type: string
+
+    ErrorDetail:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string
+
+    ValidationError:
+      type: object
+      required: [loc, msg, type]
+      properties:
+        loc:
+          type: array
+          items:
+            oneOf:
+              - type: string
+              - type: integer
+        msg:
+          type: string
+        type:
+          type: string
+
+    ValidationErrorResponse:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationError"
+
+    Language:
+      type: string
+      enum: [python, cpp, java, nodejs]
+
+    SubmissionStatus:
+      type: string
+      enum: [pending, running, completed]
+
+    Verdict:
+      type: string
+      enum: [ACC, WA, TLE, MLE, RE, CE, IE]

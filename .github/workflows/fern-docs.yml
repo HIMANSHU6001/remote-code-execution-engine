@@ -1,0 +1,41 @@
+name: Fern Validate and Generate
+
+on:
+  pull_request:
+    paths:
+      - "fern/**"
+      - "api/**"
+      - "shared/**"
+      - ".github/workflows/fern-docs.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "fern/**"
+      - "api/**"
+      - "shared/**"
+      - ".github/workflows/fern-docs.yml"
+
+jobs:
+  fern:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Fern CLI
+        run: npm install -g fern-api
+
+      - name: Fern Check
+        working-directory: fern
+        run: fern check
+
+      - name: Fern Generate
+        working-directory: fern
+        run: fern generate --group local
