@@ -13,8 +13,8 @@ import shutil
 import subprocess
 import sys
 from collections.abc import Iterable
-from typing import Any
 from pathlib import Path
+from typing import Any
 
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.sql.schema import Column, ForeignKeyConstraint, Table

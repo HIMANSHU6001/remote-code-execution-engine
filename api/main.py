@@ -1,5 +1,6 @@
 """FastAPI application factory."""
 
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -11,7 +12,7 @@ from config.settings import get_allowed_origins
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Startup: nothing to do (SQLAlchemy engine is created at import time)
     yield
     # Shutdown: dispose async engine

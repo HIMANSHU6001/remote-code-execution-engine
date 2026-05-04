@@ -2,12 +2,11 @@
 
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import Enum as PyEnum
 
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
-    Enum,
     ForeignKey,
     Index,
     Integer,
@@ -16,6 +15,9 @@ from sqlalchemy import (
     UniqueConstraint,
     text,
 )
+from sqlalchemy import (
+    Enum as SAEnum,
+)
 from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,7 +25,7 @@ from db.base import Base
 from shared.enums import Language, SubmissionStatus, Verdict
 
 
-def _enum_values(enum_cls: type[Enum]) -> list[str]:
+def _enum_values(enum_cls: type[PyEnum]) -> list[str]:
     return [member.value for member in enum_cls]
 
 
@@ -149,12 +151,12 @@ class Submission(Base):
         UUID(as_uuid=True), ForeignKey("problems.id"), nullable=False
     )
     language: Mapped[Language] = mapped_column(
-        Enum(Language, name="language_enum", create_type=False, values_callable=_enum_values),
+        SAEnum(Language, name="language_enum", create_type=False, values_callable=_enum_values),
         nullable=False,
     )
     code: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[SubmissionStatus] = mapped_column(
-        Enum(
+        SAEnum(
             SubmissionStatus,
             name="submission_status",
             create_type=False,
@@ -164,7 +166,7 @@ class Submission(Base):
         server_default=text("'pending'"),
     )
     verdict: Mapped[Verdict | None] = mapped_column(
-        Enum(Verdict, name="verdict_enum", create_type=False, values_callable=_enum_values),
+        SAEnum(Verdict, name="verdict_enum", create_type=False, values_callable=_enum_values),
         nullable=True,
     )
     execution_time_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any, cast
+from typing import Any
 
 import jwt
 from passlib.context import CryptContext
@@ -13,13 +13,13 @@ _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
-    hash_pass = cast(str, _pwd_context.hash(password))
+    hash_pass = str(_pwd_context.hash(password))
     print(f"Hashing password: {password} -> {hash_pass}")
     return hash_pass
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    return cast(bool, _pwd_context.verify(password, password_hash))
+    return bool(_pwd_context.verify(password, password_hash))
 
 
 def create_access_token(*, user_id: uuid.UUID, email: str, role: str) -> str:
@@ -33,7 +33,7 @@ def create_access_token(*, user_id: uuid.UUID, email: str, role: str) -> str:
         "exp": int(expires_at.timestamp()),
     }
     token = jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
-    return cast(str, token)
+    return token
 
 
 def verify_s2s_token(token: str) -> dict[str, Any]:
@@ -45,4 +45,4 @@ def verify_s2s_token(token: str) -> dict[str, Any]:
         issuer=settings.S2S_JWT_ISSUER,
         options={"require": ["iss", "aud", "iat", "exp", "jti"]},
     )
-    return cast(dict[str, Any], payload)
+    return payload

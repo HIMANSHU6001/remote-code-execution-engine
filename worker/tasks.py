@@ -5,11 +5,14 @@ from __future__ import annotations
 import json
 import shutil
 import time
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any, TypeVar, cast
 
 import redis as _redis_sync
 from celery import Task
 from sqlalchemy import text
+from sqlalchemy.engine import CursorResult
 
 from config.settings import settings
 from db.sync_session import get_sync_db
@@ -22,6 +25,12 @@ from worker.runners import LANGUAGE_CONFIG
 from worker.sandbox import cleanup_sandbox, prepare_sandbox
 
 _redis = _redis_sync.from_url(settings.REDIS_URL, decode_responses=True)
+
+F = TypeVar("F", bound=Callable[..., object])
+
+
+def _typed_task(*args: Any, **kwargs: Any) -> Callable[[F], F]:
+    return cast(Callable[[F], F], app.task(*args, **kwargs))
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -95,7 +104,7 @@ def _finalise(
 # ---------------------------------------------------------------------------
 
 
-@app.task(bind=True, max_retries=0, name="worker.tasks.evaluate_submission")
+@_typed_task(bind=True, max_retries=0, name="worker.tasks.evaluate_submission")
 def evaluate_submission(self: Task, job_id: str) -> None:
     """Evaluate all test cases for a submission and record the verdict.
 
@@ -111,32 +120,45 @@ def evaluate_submission(self: Task, job_id: str) -> None:
     9. Cleanup (always in finally)
     """
     container_name: str | None = None
-    job_dir = None
+    job_dir: Path | None = None
 
     try:
         print(f"Starting evaluation for submission {job_id}", flush=True)
         # --- 1. Atomic pending → running ---
         with get_sync_db() as db:
-            result = db.execute(
-                text(
-                    "UPDATE submissions SET status='running' WHERE id=:id AND status='pending' RETURNING id"
+            transition_result = cast(
+                CursorResult[Any],
+                db.execute(
+                    text(
+                        "UPDATE submissions SET status='running' WHERE id=:id AND status='pending' RETURNING id"
+                    ),
+                    {"id": job_id},
                 ),
-                {"id": job_id},
             )
-            if result.rowcount == 0:
+            if transition_result.rowcount == 0:
                 print(f"Submission {job_id} is already running or completed — dropping task")
                 return
 
-            row = db.execute(
+            submission_row = db.execute(
                 text("SELECT language, code, problem_id FROM submissions WHERE id=:id"),
                 {"id": job_id},
             ).fetchone()
-            language, code, problem_id = row.language, row.code, row.problem_id
+            if submission_row is None:
+                _finalise(job_id, Verdict.IE, 0, 0, "", "Submission not found")
+                return
+            language, code, problem_id = (
+                submission_row.language,
+                submission_row.code,
+                submission_row.problem_id,
+            )
 
-            prob = db.execute(
+            problem_row = db.execute(
                 text("SELECT base_time_limit_ms, base_memory_limit_mb FROM problems WHERE id=:id"),
                 {"id": problem_id},
             ).fetchone()
+            if problem_row is None:
+                _finalise(job_id, Verdict.IE, 0, 0, "", "Problem not found")
+                return
 
             test_cases = db.execute(
                 text(
@@ -146,7 +168,9 @@ def evaluate_submission(self: Task, job_id: str) -> None:
             ).fetchall()
 
         # --- 2. Compute fair limits ---
-        limits = compute_fair_limits(language, prob.base_time_limit_ms, prob.base_memory_limit_mb)
+        limits = compute_fair_limits(
+            language, problem_row.base_time_limit_ms, problem_row.base_memory_limit_mb
+        )
 
         # --- 3. Runner config ---
         runner = LANGUAGE_CONFIG[language]
@@ -167,6 +191,8 @@ def evaluate_submission(self: Task, job_id: str) -> None:
 
         # --- 5. Compile (if needed) ---
         if runner.compile_cmd:
+            if runner.compile_artifact is None:
+                raise RuntimeError("Missing compile artifact for language runner")
             success = run_compile_container(
                 job_dir=job_dir,
                 image=image,
@@ -196,14 +222,16 @@ def evaluate_submission(self: Task, job_id: str) -> None:
         start = time.monotonic()
 
         for idx, tc in enumerate(test_cases):
-            result = exec_test_case(
+            exec_result = exec_test_case(
                 container_name=container_name,
                 run_cmd=runner.run_cmd,
                 test_case_index=idx,
                 time_sec=limits.time_sec,
             )
-            last_result = result
-            tc_verdict = _classify_verdict(result.exit_code, result.stdout, tc.expected_output)
+            last_result = exec_result
+            tc_verdict = _classify_verdict(
+                exec_result.exit_code, exec_result.stdout, tc.expected_output
+            )
             if tc_verdict != Verdict.ACC:
                 verdict = tc_verdict
                 break
@@ -234,7 +262,7 @@ def evaluate_submission(self: Task, job_id: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-@app.task(name="worker.tasks.sweep_zombies")
+@_typed_task(name="worker.tasks.sweep_zombies")
 def sweep_zombies() -> None:
     """Mark 'running' submissions stuck for > 2 minutes as IE (zombie sweep).
 
@@ -257,7 +285,7 @@ def sweep_zombies() -> None:
         _redis.publish(f"job_updates:{job_id}", payload)
 
 
-@app.task(name="worker.tasks.sweep_sandbox_dirs")
+@_typed_task(name="worker.tasks.sweep_sandbox_dirs")
 def sweep_sandbox_dirs() -> None:
     """Remove sandbox job directories older than 15 minutes.
 

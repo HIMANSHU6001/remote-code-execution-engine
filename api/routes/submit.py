@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Annotated
+from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,7 +18,7 @@ from worker.tasks import evaluate_submission
 router: APIRouter = APIRouter()
 
 
-@router.post("/submit", response_model=SubmitResponse, status_code=status.HTTP_202_ACCEPTED)  # type: ignore[misc]
+@router.post("/submit", response_model=SubmitResponse, status_code=status.HTTP_202_ACCEPTED)
 async def submit_code(
     body: SubmitRequest,
     user_id: Annotated[uuid.UUID, Depends(get_current_user)],
@@ -57,6 +57,6 @@ async def submit_code(
     print(f"Enqueued submission {job_id} for evaluation")
 
     # Enqueue Celery task (fire-and-forget)
-    evaluate_submission.delay(str(job_id))
+    cast(Any, evaluate_submission).delay(str(job_id))
 
     return SubmitResponse(job_id=job_id)

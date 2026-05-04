@@ -6,6 +6,7 @@ import asyncio
 import contextlib
 import json
 import uuid
+from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -24,7 +25,7 @@ router = APIRouter()
 active_connections: dict[str, WebSocket] = {}
 
 
-async def _send_json(ws: WebSocket, payload: dict) -> None:
+async def _send_json(ws: WebSocket, payload: dict[str, Any]) -> None:
     await ws.send_text(json.dumps(payload))
 
 
@@ -111,10 +112,13 @@ async def websocket_endpoint(ws: WebSocket, job_id: uuid.UUID, token: str) -> No
 
         try:
 
-            async def listen() -> dict:
+            async def listen() -> dict[str, Any]:
                 async for message in pubsub.listen():
                     if message["type"] == "message":
-                        return json.loads(message["data"])
+                        data = json.loads(message["data"])
+                        if isinstance(data, dict):
+                            return {str(key): value for key, value in data.items()}
+                        return {}
                 return {}
 
             result_data = await asyncio.wait_for(listen(), timeout=settings.WS_TIMEOUT_SEC)
