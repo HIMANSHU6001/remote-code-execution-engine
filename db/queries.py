@@ -1,8 +1,10 @@
 """Async query helpers — called exclusively from FastAPI route handlers."""
+
 from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
+from typing import cast
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,14 +12,14 @@ from sqlalchemy.orm import selectinload
 
 from db.models import OAuthAccount, Problem, Submission, User
 
-
 # ---------------------------------------------------------------------------
 # Problems
 # ---------------------------------------------------------------------------
 
+
 async def get_problem(db: AsyncSession, problem_id: uuid.UUID) -> Problem | None:
     result = await db.execute(select(Problem).where(Problem.id == problem_id))
-    return result.scalar_one_or_none()
+    return cast(Problem | None, result.scalar_one_or_none())
 
 
 async def get_problem_with_sample_cases(db: AsyncSession, problem_id: uuid.UUID) -> Problem | None:
@@ -26,16 +28,15 @@ async def get_problem_with_sample_cases(db: AsyncSession, problem_id: uuid.UUID)
     Hidden test cases are never exposed through the API.
     """
     result = await db.execute(
-        select(Problem)
-        .options(selectinload(Problem.test_cases))
-        .where(Problem.id == problem_id)
+        select(Problem).options(selectinload(Problem.test_cases)).where(Problem.id == problem_id)
     )
-    return result.scalar_one_or_none()
+    return cast(Problem | None, result.scalar_one_or_none())
 
 
 # ---------------------------------------------------------------------------
 # Submissions
 # ---------------------------------------------------------------------------
+
 
 async def create_submission(
     db: AsyncSession,
@@ -62,16 +63,17 @@ async def create_submission(
 
 async def get_submission(db: AsyncSession, job_id: uuid.UUID) -> Submission | None:
     result = await db.execute(select(Submission).where(Submission.id == job_id))
-    return result.scalar_one_or_none()
+    return cast(Submission | None, result.scalar_one_or_none())
 
 
 # ---------------------------------------------------------------------------
 # Auth
 # ---------------------------------------------------------------------------
 
+
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
     result = await db.execute(select(User).where(User.email == email))
-    return result.scalar_one_or_none()
+    return cast(User | None, result.scalar_one_or_none())
 
 
 async def create_user(
@@ -107,7 +109,7 @@ async def get_user_by_verification_hash(db: AsyncSession, token_hash: str) -> Us
             User.verification_token_expires_at >= now,
         )
     )
-    return result.scalar_one_or_none()
+    return cast(User | None, result.scalar_one_or_none())
 
 
 async def mark_user_verified(db: AsyncSession, user: User) -> None:
@@ -129,7 +131,7 @@ async def get_oauth_account(
             OAuthAccount.provider_account_id == provider_account_id,
         )
     )
-    return result.scalar_one_or_none()
+    return cast(OAuthAccount | None, result.scalar_one_or_none())
 
 
 async def get_oauth_account_by_user_provider(
@@ -144,7 +146,7 @@ async def get_oauth_account_by_user_provider(
             OAuthAccount.provider == provider,
         )
     )
-    return result.scalar_one_or_none()
+    return cast(OAuthAccount | None, result.scalar_one_or_none())
 
 
 async def create_oauth_account(

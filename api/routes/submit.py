@@ -1,7 +1,9 @@
 """POST /submit — validate, rate-limit, persist, and enqueue."""
+
 from __future__ import annotations
 
 import uuid
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,14 +15,14 @@ from rate_limit import apply_rate_limits
 from shared.models import SubmitRequest, SubmitResponse
 from worker.tasks import evaluate_submission
 
-router = APIRouter()
+router: APIRouter = APIRouter()
 
 
-@router.post("/submit", response_model=SubmitResponse, status_code=status.HTTP_202_ACCEPTED)
+@router.post("/submit", response_model=SubmitResponse, status_code=status.HTTP_202_ACCEPTED)  # type: ignore[misc]
 async def submit_code(
     body: SubmitRequest,
-    user_id: uuid.UUID = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    user_id: Annotated[uuid.UUID, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> SubmitResponse:
     """Accept a code submission.
 
@@ -32,6 +34,9 @@ async def submit_code(
     5. rate limit not exceeded — checked here via Redis
     """
     # 4. Problem must exist
+    print(
+        f"Received submission: user_id={user_id}, problem_id={body.problem_id}, language={body.language}, code_size={len(body.code)}"
+    )
     problem = await get_problem(db, body.problem_id)
     if problem is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Problem not found")
@@ -48,6 +53,8 @@ async def submit_code(
         language=body.language.value,
         code=body.code,
     )
+
+    print(f"Enqueued submission {job_id} for evaluation")
 
     # Enqueue Celery task (fire-and-forget)
     evaluate_submission.delay(str(job_id))

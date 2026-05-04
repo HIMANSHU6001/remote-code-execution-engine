@@ -1,5 +1,5 @@
 import uuid
-from typing import Any
+from typing import Annotated, Any
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -12,7 +12,7 @@ security = HTTPBearer()
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
 ) -> uuid.UUID:
     """Decode JWT and return the user UUID from the 'sub' claim.
 
@@ -34,7 +34,7 @@ async def get_current_user(
 
 
 async def get_s2s_claims(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
 ) -> dict[str, Any]:
     """Validate S2S JWT and return claims payload."""
     try:

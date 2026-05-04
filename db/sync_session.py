@@ -3,8 +3,9 @@
 Celery tasks run in a standard synchronous context (no asyncio event loop).
 A separate sync engine is required — do NOT import this from FastAPI code.
 """
+
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker

@@ -4,11 +4,10 @@ Applies two independent limiters on every POST /submit in order:
 1. Token bucket  — burst control    (1 req / 2 s per user)
 2. Sliding window — sustained ceiling (10 req / 60 s per user)
 """
+
 from __future__ import annotations
 
 import uuid
-
-from fastapi import HTTPException, status
 
 from rate_limit.sliding_window import check_sliding_window
 from rate_limit.token_bucket import check_token_bucket

@@ -4,6 +4,7 @@ C++ is the baseline. All limits are computed from the problem's base values
 using per-language multipliers so that all participants have an equal
 opportunity to solve the problem regardless of language choice.
 """
+
 from __future__ import annotations
 
 import math
@@ -14,16 +15,16 @@ from shared.enums import Language
 
 @dataclass(frozen=True)
 class FairLimits:
-    time_sec: int      # wall-clock seconds passed to `timeout` command
-    memory_mb: int     # --memory and --memory-swap value for Docker
+    time_sec: int  # wall-clock seconds passed to `timeout` command
+    memory_mb: int  # --memory and --memory-swap value for Docker
 
 
 # (time_multiplier, memory_multiplier, memory_offset_mb)
 _MULTIPLIERS: dict[str, tuple[float, float, int]] = {
-    Language.CPP:    (1.0, 1.0,  0),
-    Language.JAVA:   (2.0, 1.5, 100),
-    Language.PYTHON: (5.0, 1.5,  20),
-    Language.NODEJS: (3.0, 1.3,  30),
+    Language.CPP: (1.0, 1.0, 0),
+    Language.JAVA: (2.0, 1.5, 100),
+    Language.PYTHON: (5.0, 1.5, 20),
+    Language.NODEJS: (3.0, 1.3, 30),
 }
 
 

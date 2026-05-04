@@ -5,10 +5,13 @@ Refill    : 0.5 tokens / second  (one request every 2 seconds)
 Storage   : Redis keys tb:{user_id}:tokens (FLOAT), tb:{user_id}:last_refill (FLOAT unix ts)
 Atomicity : Lua script — read-modify-write is race-free.
 """
+
 from __future__ import annotations
 
 import time
 import uuid
+from collections.abc import Awaitable
+from typing import cast
 
 from fastapi import HTTPException, status
 
@@ -59,19 +62,23 @@ async def check_token_bucket(user_id: uuid.UUID) -> None:
     last_refill_key = f"tb:{uid}:last_refill"
     now = time.time()
 
-    result = await redis.eval(
-        _LUA_TOKEN_BUCKET,
-        2,
-        tokens_key,
-        last_refill_key,
-        settings.TOKEN_BUCKET_CAPACITY,
-        settings.TOKEN_BUCKET_REFILL_RATE,
-        now,
+    result = await cast(
+        Awaitable[list[object]],
+        redis.eval(
+            _LUA_TOKEN_BUCKET,
+            2,
+            tokens_key,
+            last_refill_key,
+            settings.TOKEN_BUCKET_CAPACITY,
+            settings.TOKEN_BUCKET_REFILL_RATE,
+            now,
+        ),
     )
 
-    allowed, wait_str = result
+    allowed_raw, wait_raw = result
+    allowed = bool(int(str(allowed_raw)))
     if not allowed:
-        retry_after = max(1, int(float(wait_str)) + 1)
+        retry_after = max(1, int(float(str(wait_raw))) + 1)
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Submission rate limit exceeded (burst)",

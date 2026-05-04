@@ -1,10 +1,13 @@
 """SQLAlchemy ORM models — single source of truth for table definitions."""
+
 import uuid
 from datetime import datetime
+from enum import Enum
 
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
+    Enum,
     ForeignKey,
     Index,
     Integer,
@@ -17,6 +20,11 @@ from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base import Base
+from shared.enums import Language, SubmissionStatus, Verdict
+
+
+def _enum_values(enum_cls: type[Enum]) -> list[str]:
+    return [member.value for member in enum_cls]
 
 
 class User(Base):
@@ -28,10 +36,16 @@ class User(Base):
     password_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("FALSE"))
     verification_token_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
-    verification_token_expires_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    verification_token_expires_at: Mapped[datetime | None] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=True
+    )
     role: Mapped[str] = mapped_column(Text, nullable=False, server_default="user")
-    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()"))
-    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()"))
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()")
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()")
+    )
 
     oauth_accounts: Mapped[list["OAuthAccount"]] = relationship(
         back_populates="user",
@@ -55,8 +69,12 @@ class OAuthAccount(Base):
     )
     provider: Mapped[str] = mapped_column(Text, nullable=False)
     provider_account_id: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()"))
-    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()"))
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()")
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()")
+    )
 
     user: Mapped[User] = relationship(back_populates="oauth_accounts")
 
@@ -75,11 +93,19 @@ class Problem(Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     base_time_limit_ms: Mapped[int] = mapped_column(Integer, nullable=False)
     base_memory_limit_mb: Mapped[int] = mapped_column(Integer, nullable=False)
-    created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()"))
-    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()"))
+    created_by: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()")
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()")
+    )
 
-    test_cases: Mapped[list["TestCase"]] = relationship(back_populates="problem", cascade="all, delete-orphan")
+    test_cases: Mapped[list["TestCase"]] = relationship(
+        back_populates="problem", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         CheckConstraint("base_time_limit_ms > 0", name="chk_time_limit_positive"),
@@ -98,7 +124,9 @@ class TestCase(Base):
     expected_output: Mapped[str] = mapped_column(Text, nullable=False)
     is_sample: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("FALSE"))
     ordering: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
-    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()"))
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()")
+    )
 
     problem: Mapped["Problem"] = relationship(back_populates="test_cases")
 
@@ -114,18 +142,41 @@ class Submission(Base):
 
     # id is server-generated before insert; never client-supplied
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    problem_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("problems.id"), nullable=False)
-    language: Mapped[str] = mapped_column(Text, nullable=False)          # language_enum value
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    problem_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("problems.id"), nullable=False
+    )
+    language: Mapped[Language] = mapped_column(
+        Enum(Language, name="language_enum", create_type=False, values_callable=_enum_values),
+        nullable=False,
+    )
     code: Mapped[str] = mapped_column(Text, nullable=False)
-    status: Mapped[str] = mapped_column(Text, nullable=False, server_default="pending")  # submission_status
-    verdict: Mapped[str | None] = mapped_column(Text, nullable=True)     # verdict_enum; NULL until completed
+    status: Mapped[SubmissionStatus] = mapped_column(
+        Enum(
+            SubmissionStatus,
+            name="submission_status",
+            create_type=False,
+            values_callable=_enum_values,
+        ),
+        nullable=False,
+        server_default=text("'pending'"),
+    )
+    verdict: Mapped[Verdict | None] = mapped_column(
+        Enum(Verdict, name="verdict_enum", create_type=False, values_callable=_enum_values),
+        nullable=True,
+    )
     execution_time_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     memory_used_mb: Mapped[float | None] = mapped_column(Numeric(8, 2), nullable=True)
     stdout_snippet: Mapped[str | None] = mapped_column(Text, nullable=True)  # first 1 KB
     stderr_snippet: Mapped[str | None] = mapped_column(Text, nullable=True)  # first 512 B
-    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()"))
-    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()"))
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()")
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()")
+    )
 
     __table_args__ = (
         CheckConstraint("octet_length(code) <= 65536", name="chk_code_size"),

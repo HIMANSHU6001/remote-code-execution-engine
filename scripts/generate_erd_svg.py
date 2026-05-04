@@ -12,14 +12,15 @@ import argparse
 import shutil
 import subprocess
 import sys
+from collections.abc import Iterable
+from typing import Any
 from pathlib import Path
-from typing import Iterable
 
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.sql.schema import Column, ForeignKeyConstraint, Table
 
-from db.base import Base
 import db.models  # noqa: F401  # Import registers models on Base.metadata.
+from db.base import Base
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MMD = ROOT / "docs" / "db-erd.mmd"
@@ -41,7 +42,7 @@ def _normalize_type_name(raw: str) -> str:
     return value.strip("_") or "TEXT"
 
 
-def _column_type_label(column: Column) -> str:
+def _column_type_label(column: Column[Any]) -> str:
     return _normalize_type_name(str(column.type))
 
 
@@ -204,4 +205,4 @@ if __name__ == "__main__":
         raise SystemExit(main())
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
-        raise SystemExit(1)
+        raise SystemExit(1) from exc

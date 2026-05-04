@@ -48,14 +48,14 @@ class Settings(BaseSettings):
     SLIDING_WINDOW_SEC: int = 60
 
     # Output caps (bytes)
-    STDOUT_CAP_BYTES: int = 102_400   # 100 KB
-    STDERR_CAP_BYTES: int = 4_096    # 4 KB
+    STDOUT_CAP_BYTES: int = 102_400  # 100 KB
+    STDERR_CAP_BYTES: int = 4_096  # 4 KB
     COMPILE_ERR_CAP_BYTES: int = 4_096
 
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    return Settings()  # type: ignore[call-arg]
 
 
 settings = get_settings()

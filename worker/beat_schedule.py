@@ -1,5 +1,4 @@
 """Celery Beat periodic task schedule."""
-from celery.schedules import crontab
 
 beat_schedule = {
     # Mark stuck 'running' submissions as IE every 60 seconds

@@ -1,4 +1,5 @@
 """Celery application instance."""
+
 from celery import Celery
 
 app = Celery("rce_worker")

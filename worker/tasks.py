@@ -1,4 +1,5 @@
 """Celery tasks: evaluate_submission, sweep_zombies, sweep_sandbox_dirs."""
+
 from __future__ import annotations
 
 import json
@@ -6,6 +7,7 @@ import shutil
 import time
 from pathlib import Path
 
+import redis as _redis_sync
 from celery import Task
 from sqlalchemy import text
 
@@ -19,13 +21,12 @@ from worker.fairness import compute_fair_limits
 from worker.runners import LANGUAGE_CONFIG
 from worker.sandbox import cleanup_sandbox, prepare_sandbox
 
-import redis as _redis_sync
-
 _redis = _redis_sync.from_url(settings.REDIS_URL, decode_responses=True)
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _normalise(text: str) -> str:
     """Strip trailing whitespace per line and remove trailing blank lines."""
@@ -38,15 +39,22 @@ def _normalise(text: str) -> str:
 def _classify_verdict(exit_code: int, stdout: str, expected: str) -> Verdict:
     if exit_code == 124:
         return Verdict.TLE
-    if exit_code != 0:
+    elif exit_code != 0:
         return Verdict.RE
-    if _normalise(stdout) != _normalise(expected):
+    elif _normalise(stdout) != _normalise(expected):
         return Verdict.WA
-    return Verdict.ACC
+    else:
+        return Verdict.ACC
 
 
-def _finalise(job_id: str, verdict: Verdict, exec_time_ms: int, memory_mb: int,
-              stdout_snippet: str, stderr_snippet: str) -> None:
+def _finalise(
+    job_id: str,
+    verdict: Verdict,
+    exec_time_ms: int,
+    memory_mb: int,
+    stdout_snippet: str,
+    stderr_snippet: str,
+) -> None:
     """Write final result to PostgreSQL and publish to Redis Pub/Sub."""
     with get_sync_db() as db:
         db.execute(
@@ -86,6 +94,7 @@ def _finalise(job_id: str, verdict: Verdict, exec_time_ms: int, memory_mb: int,
 # Main task
 # ---------------------------------------------------------------------------
 
+
 @app.task(bind=True, max_retries=0, name="worker.tasks.evaluate_submission")
 def evaluate_submission(self: Task, job_id: str) -> None:
     """Evaluate all test cases for a submission and record the verdict.
@@ -105,14 +114,18 @@ def evaluate_submission(self: Task, job_id: str) -> None:
     job_dir = None
 
     try:
+        print(f"Starting evaluation for submission {job_id}", flush=True)
         # --- 1. Atomic pending → running ---
         with get_sync_db() as db:
             result = db.execute(
-                text("UPDATE submissions SET status='running' WHERE id=:id AND status='pending' RETURNING id"),
+                text(
+                    "UPDATE submissions SET status='running' WHERE id=:id AND status='pending' RETURNING id"
+                ),
                 {"id": job_id},
             )
             if result.rowcount == 0:
-                return  # already running or completed — drop task
+                print(f"Submission {job_id} is already running or completed — dropping task")
+                return
 
             row = db.execute(
                 text("SELECT language, code, problem_id FROM submissions WHERE id=:id"),
@@ -126,7 +139,9 @@ def evaluate_submission(self: Task, job_id: str) -> None:
             ).fetchone()
 
             test_cases = db.execute(
-                text("SELECT id, input_data, expected_output FROM test_cases WHERE problem_id=:pid ORDER BY ordering ASC"),
+                text(
+                    "SELECT id, input_data, expected_output FROM test_cases WHERE problem_id=:pid ORDER BY ordering ASC"
+                ),
                 {"pid": problem_id},
             ).fetchall()
 
@@ -135,6 +150,9 @@ def evaluate_submission(self: Task, job_id: str) -> None:
 
         # --- 3. Runner config ---
         runner = LANGUAGE_CONFIG[language]
+        print(
+            f"Evaluating submission {job_id} with language={language}, time_limit={limits.time_sec}s, memory_limit={limits.memory_mb}MB"
+        )
 
         # --- 4. Prepare sandbox ---
         job_dir = prepare_sandbox(
@@ -143,6 +161,7 @@ def evaluate_submission(self: Task, job_id: str) -> None:
             source_filename=runner.source_file,
             test_inputs=[tc.input_data for tc in test_cases],
         )
+        print(f"Prepared sandbox for submission {job_id}")
 
         image = f"rce-{language}:latest"
 
@@ -158,12 +177,17 @@ def evaluate_submission(self: Task, job_id: str) -> None:
                 ce_err = ""
                 err_file = job_dir / "compile_err.txt"
                 if err_file.exists():
-                    ce_err = err_file.read_text(encoding="utf-8", errors="replace")[:settings.COMPILE_ERR_CAP_BYTES]
+                    ce_err = err_file.read_text(encoding="utf-8", errors="replace")[
+                        : settings.COMPILE_ERR_CAP_BYTES
+                    ]
                 _finalise(job_id, Verdict.CE, 0, limits.memory_mb, "", ce_err)
+                print(f"Compilation failed for submission {job_id}")
                 return
-
         # --- 6. Launch execution container ---
-        container_name = launch_exec_container(job_dir=job_dir, image=image, memory_mb=limits.memory_mb)
+        container_name = launch_exec_container(
+            job_dir=job_dir, image=image, memory_mb=limits.memory_mb
+        )
+        print(f"Execution container launched for submission {job_id}")
 
         # --- 7. Execute test cases (fail-fast) ---
         verdict = Verdict.ACC
@@ -191,6 +215,7 @@ def evaluate_submission(self: Task, job_id: str) -> None:
 
         # --- 8. Finalise ---
         _finalise(job_id, verdict, total_time_ms, limits.memory_mb, stdout_snip, stderr_snip)
+        print(f"Finalised evaluation for submission {job_id}")
 
     except Exception:
         _finalise(job_id, Verdict.IE, 0, 0, "", "Internal error")
@@ -207,6 +232,7 @@ def evaluate_submission(self: Task, job_id: str) -> None:
 # ---------------------------------------------------------------------------
 # Periodic tasks (Celery Beat)
 # ---------------------------------------------------------------------------
+
 
 @app.task(name="worker.tasks.sweep_zombies")
 def sweep_zombies() -> None:

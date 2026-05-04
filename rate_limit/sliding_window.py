@@ -4,10 +4,13 @@ Limit  : 10 submissions per 60 seconds per user
 Storage: Redis sorted set  sw:{user_id}  (score = unix timestamp)
 Atomicity: Lua script — ZREMRANGEBYSCORE + ZCARD + ZADD is race-free.
 """
+
 from __future__ import annotations
 
 import time
 import uuid
+from collections.abc import Awaitable
+from typing import cast
 
 from fastapi import HTTPException, status
 
@@ -45,19 +48,23 @@ async def check_sliding_window(user_id: uuid.UUID) -> None:
     window = settings.SLIDING_WINDOW_SEC
     max_count = settings.SLIDING_WINDOW_MAX
 
-    result = await redis.eval(
-        _LUA_SLIDING_WINDOW,
-        1,
-        key,
-        now,
-        window,
-        max_count,
-        window + 10,
+    result = await cast(
+        Awaitable[list[object]],
+        redis.eval(
+            _LUA_SLIDING_WINDOW,
+            1,
+            key,
+            now,
+            window,
+            max_count,
+            window + 10,
+        ),
     )
 
-    allowed, count_str, reset_str = result
+    allowed_raw, count_raw, reset_raw = result
+    allowed = bool(int(str(allowed_raw)))
     if not allowed:
-        reset_in = max(1, int(reset_str))
+        reset_in = max(1, int(str(reset_raw)))
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Submission rate limit exceeded (sustained)",

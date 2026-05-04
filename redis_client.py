@@ -5,20 +5,21 @@ This module provides:
   - get_async_redis()  — returns a cached async Redis client (coredis / redis.asyncio)
   - publish_result()   — fire-and-forget publish to a job's Pub/Sub channel (sync)
 """
+
 from __future__ import annotations
 
 import json
 from functools import lru_cache
 
-import redis.asyncio as aioredis
 import redis as _redis_sync
+import redis.asyncio as aioredis
 
 from config.settings import settings
-
 
 # ---------------------------------------------------------------------------
 # Async client — FastAPI & WebSocket handler
 # ---------------------------------------------------------------------------
+
 
 @lru_cache(maxsize=1)
 def _get_async_redis_cached() -> aioredis.Redis:
@@ -34,12 +35,13 @@ async def get_async_redis() -> aioredis.Redis:
 # Sync client — Celery worker
 # ---------------------------------------------------------------------------
 
+
 @lru_cache(maxsize=1)
 def _get_sync_redis() -> _redis_sync.Redis:
     return _redis_sync.from_url(settings.REDIS_URL, decode_responses=True)
 
 
-def publish_result(job_id: str, payload: dict) -> None:
+def publish_result(job_id: str, payload: dict[str, object]) -> None:
     """Publish a completed job result to the Redis Pub/Sub channel.
 
     Fire-and-forget: if no WebSocket listener is subscribed the message is

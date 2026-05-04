@@ -4,11 +4,11 @@ Runs a short-lived Docker container to compile C++ / Java source code.
 The compiled artifact is written back into the shared sandbox directory.
 Compilation Error (CE) is detected by checking for the expected artifact.
 """
+
 from __future__ import annotations
 
 import subprocess
 from pathlib import Path
-
 
 _COMPILE_TIMEOUT_SEC = 30
 
@@ -45,11 +45,14 @@ def run_compile_container(
         True if the artifact exists after compilation, False on CE.
     """
     cmd = [
-        "docker", "run",
+        "docker",
+        "run",
         *_COMPILE_FLAGS,
         f"--volume={job_dir}:/sandbox",
         image,
-        "sh", "-c", f"{compile_cmd} 2>/sandbox/compile_err.txt",
+        "sh",
+        "-c",
+        f"{compile_cmd} 2>/sandbox/compile_err.txt",
     ]
 
     try:

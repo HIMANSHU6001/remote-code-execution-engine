@@ -96,6 +96,10 @@ services:
       context: .
       dockerfile: Dockerfile.worker
     restart: unless-stopped
+    environment:
+      - DOCKER_HOST=tcp://host.docker.internal:2375
+      - HOST_PROJECT_ROOT=${HOST_PROJECT_ROOT}
+      - HOST_SANDBOX_ROOT=${HOST_SANDBOX_ROOT}
     depends_on:
       postgres:
         condition: service_healthy
@@ -104,9 +108,10 @@ services:
       migrate:
         condition: service_completed_successfully
     volumes:
-      # Mount Docker socket so the worker can launch sandbox containers
       - /var/run/docker.sock:/var/run/docker.sock
-      - sandbox_data:/sandbox/jobs
+      - ./docker/sandbox:/sandbox/jobs
+      - ./infra/seccomp.json:/etc/rce/seccomp.json:ro
+      - .:/app
     command: celery -A worker.app worker --loglevel=info --concurrency=2
     env_file:
       - .env

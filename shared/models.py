@@ -10,6 +10,7 @@ from shared.enums import Language, SubmissionStatus, Verdict
 # Inbound
 # ---------------------------------------------------------------------------
 
+
 class SubmitRequest(BaseModel):
     problem_id: UUID4
     language: Language
@@ -26,6 +27,7 @@ class SubmitRequest(BaseModel):
 # ---------------------------------------------------------------------------
 # Outbound HTTP
 # ---------------------------------------------------------------------------
+
 
 class SubmitResponse(BaseModel):
     job_id: UUID4
@@ -60,6 +62,7 @@ class ProblemResponse(BaseModel):
 # WebSocket payloads
 # ---------------------------------------------------------------------------
 
+
 class WSAckPayload(BaseModel):
     type: str = "ack"
     job_id: str
@@ -90,6 +93,7 @@ class WSErrorPayload(BaseModel):
 # Generic error response
 # ---------------------------------------------------------------------------
 
+
 class ErrorResponse(BaseModel):
     error: str
     detail: str | None = None
@@ -98,6 +102,7 @@ class ErrorResponse(BaseModel):
 # ---------------------------------------------------------------------------
 # Auth inbound
 # ---------------------------------------------------------------------------
+
 
 class SignupRequest(BaseModel):
     email: EmailStr
@@ -142,6 +147,7 @@ class SocialAuthRequest(BaseModel):
 # ---------------------------------------------------------------------------
 # Auth outbound
 # ---------------------------------------------------------------------------
+
 
 class SignupResponse(BaseModel):
     user_id: uuid.UUID

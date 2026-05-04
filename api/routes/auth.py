@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -45,18 +45,22 @@ def _normalize_email(email: str) -> str:
 def _validate_social_claims(claims: dict[str, Any], body: SocialAuthRequest) -> None:
     claim_email = claims.get("email")
     if claim_email and _normalize_email(claim_email) != _normalize_email(body.email):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Email mismatch in S2S token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Email mismatch in S2S token"
+        )
 
     claim_provider = claims.get("provider")
     if claim_provider and str(claim_provider).strip().lower() != body.provider:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Provider mismatch in S2S token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Provider mismatch in S2S token"
+        )
 
 
 @router.post("/signup", response_model=SignupResponse, status_code=status.HTTP_201_CREATED)
 async def signup(
     body: SignupRequest,
     background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> SignupResponse:
     normalized_email = _normalize_email(body.email)
 
@@ -85,13 +89,15 @@ async def signup(
 
 @router.get("/verify", response_model=VerifyEmailResponse)
 async def verify_email(
-    token: str = Query(..., min_length=10),
-    db: AsyncSession = Depends(get_db),
+    token: Annotated[str, Query(..., min_length=10)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> VerifyEmailResponse:
     token_hash = hash_verification_token(token)
     user = await get_user_by_verification_hash(db, token_hash)
     if user is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token"
+        )
 
     await mark_user_verified(db, user)
     return VerifyEmailResponse(message="Email verified successfully")
@@ -100,12 +106,16 @@ async def verify_email(
 @router.post("/login", response_model=AuthTokenResponse)
 async def login(
     body: LoginRequest,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> AuthTokenResponse:
     normalized_email = _normalize_email(body.email)
     user = await get_user_by_email(db, normalized_email)
 
-    if user is None or user.password_hash is None or not verify_password(body.password, user.password_hash):
+    if (
+        user is None
+        or user.password_hash is None
+        or not verify_password(body.password, user.password_hash)
+    ):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     if not user.is_verified:
@@ -118,8 +128,8 @@ async def login(
 @router.post("/social", response_model=SocialAuthResponse)
 async def social_auth(
     body: SocialAuthRequest,
-    claims: dict[str, Any] = Depends(get_s2s_claims),
-    db: AsyncSession = Depends(get_db),
+    claims: Annotated[dict[str, Any], Depends(get_s2s_claims)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> SocialAuthResponse:
     _validate_social_claims(claims, body)
 
@@ -179,7 +189,9 @@ async def social_auth(
             await db.refresh(user)
 
     if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unable to resolve user")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Unable to resolve user"
+        )
 
     token = create_access_token(user_id=user.id, email=user.email, role=user.role)
     return SocialAuthResponse(

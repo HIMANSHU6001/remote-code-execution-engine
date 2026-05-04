@@ -1,7 +1,9 @@
 """GET /problems/{problem_id} — fetch problem details (sample cases only)."""
+
 from __future__ import annotations
 
 import uuid
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,8 +19,8 @@ router = APIRouter()
 @router.get("/problems/{problem_id}", response_model=ProblemResponse)
 async def get_problem(
     problem_id: uuid.UUID,
-    user_id: uuid.UUID = Depends(get_current_user),  # noqa: ARG001 — auth enforced
-    db: AsyncSession = Depends(get_db),
+    user_id: Annotated[uuid.UUID, Depends(get_current_user)],  # noqa: ARG001 — auth enforced
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ProblemResponse:
     """Return problem metadata and sample test cases.
 

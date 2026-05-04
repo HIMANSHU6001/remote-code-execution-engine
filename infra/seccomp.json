@@ -31,8 +31,10 @@
         "unlink", "unlinkat",
         "chmod", "fchmod", "fchmodat",
         "nanosleep", "clock_nanosleep", "clock_gettime", "clock_getres",
+        "timer_create", "timer_settime", "timer_gettime", "timer_delete",
         "getitimer", "setitimer", "alarm",
         "wait4", "waitid",
+        "fork", "vfork",
         "execve", "execveat",
         "futex", "set_robust_list", "get_robust_list",
         "set_tid_address",
@@ -42,7 +44,17 @@
         "capget",
         "getrandom",
         "memfd_create",
-        "rseq"
+        "rseq",
+        "fcntl", 
+        "sysinfo", 
+        "prlimit64", 
+        "clone3", 
+        "statfs", 
+        "fstatfs",
+        "getdents",
+        "getdents64",
+        "close_range",
+        "faccessat2"
       ],
       "action": "SCMP_ACT_ALLOW"
     },
@@ -53,10 +65,11 @@
         {
           "index": 0,
           "value": 2114060288,
+          "valueTwo": 0,
           "op": "SCMP_CMP_MASKED_EQ"
         }
       ],
-      "comment": "Allow clone for threads only (CLONE_THREAD | CLONE_SIGHAND | CLONE_VM), not new namespaces"
+      "comment": "Allow clone without new namespace flags"
     }
   ]
 }

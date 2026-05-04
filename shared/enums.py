@@ -1,24 +1,24 @@
-from enum import StrEnum
+from enum import Enum
 
 
-class Language(StrEnum):
+class Language(str, Enum):
     PYTHON = "python"
     CPP = "cpp"
     JAVA = "java"
     NODEJS = "nodejs"
 
 
-class SubmissionStatus(StrEnum):
+class SubmissionStatus(str, Enum):
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
 
 
-class Verdict(StrEnum):
+class Verdict(str, Enum):
     ACC = "ACC"  # Accepted
-    WA = "WA"   # Wrong Answer
+    WA = "WA"  # Wrong Answer
     TLE = "TLE"  # Time Limit Exceeded
     MLE = "MLE"  # Memory Limit Exceeded
-    RE = "RE"   # Runtime Error
-    CE = "CE"   # Compilation Error
-    IE = "IE"   # Internal Error
+    RE = "RE"  # Runtime Error
+    CE = "CE"  # Compilation Error
+    IE = "IE"  # Internal Error

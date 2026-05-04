@@ -1,7 +1,9 @@
 """GET /submissions/{job_id} — poll submission status."""
+
 from __future__ import annotations
 
 import uuid
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,8 +19,8 @@ router = APIRouter()
 @router.get("/submissions/{job_id}", response_model=SubmissionDetailResponse)
 async def get_submission_status(
     job_id: uuid.UUID,
-    user_id: uuid.UUID = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    user_id: Annotated[uuid.UUID, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> SubmissionDetailResponse:
     """Return current status of a submission.
 
@@ -37,7 +39,9 @@ async def get_submission_status(
         status=submission.status,
         verdict=submission.verdict,
         execution_time_ms=submission.execution_time_ms,
-        memory_used_mb=float(submission.memory_used_mb) if submission.memory_used_mb is not None else None,
+        memory_used_mb=float(submission.memory_used_mb)
+        if submission.memory_used_mb is not None
+        else None,
         stdout_snippet=submission.stdout_snippet,
         stderr_snippet=submission.stderr_snippet,
     )

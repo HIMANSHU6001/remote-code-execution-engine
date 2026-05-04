@@ -1,7 +1,9 @@
 """WS /ws/{job_id} — real-time result delivery via Redis Pub/Sub."""
+
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import uuid
 
@@ -12,6 +14,7 @@ from config.settings import settings
 from db.base import AsyncSessionLocal
 from db.queries import get_submission
 from redis_client import get_async_redis
+from shared.enums import SubmissionStatus
 from shared.models import WSAckPayload, WSErrorPayload, WSPingPayload, WSResultPayload
 
 router = APIRouter()
@@ -50,11 +53,14 @@ async def websocket_endpoint(ws: WebSocket, job_id: uuid.UUID, token: str) -> No
         # --- Auth ---
         try:
             from fastapi.security import HTTPAuthorizationCredentials
+
             user_id = await get_current_user(
                 HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
             )
         except Exception:
-            await _send_json(ws, WSErrorPayload(code="UNAUTHORIZED", detail="Invalid token").model_dump())
+            await _send_json(
+                ws, WSErrorPayload(code="UNAUTHORIZED", detail="Invalid token").model_dump()
+            )
             return
 
         # --- Ownership + race-condition check ---
@@ -62,24 +68,30 @@ async def websocket_endpoint(ws: WebSocket, job_id: uuid.UUID, token: str) -> No
             submission = await get_submission(db, job_id)
 
         if submission is None:
-            await _send_json(ws, WSErrorPayload(code="NOT_FOUND", detail="Submission not found").model_dump())
+            await _send_json(
+                ws, WSErrorPayload(code="NOT_FOUND", detail="Submission not found").model_dump()
+            )
             return
 
         if submission.user_id != user_id:
-            await _send_json(ws, WSErrorPayload(code="FORBIDDEN", detail="Access denied").model_dump())
+            await _send_json(
+                ws, WSErrorPayload(code="FORBIDDEN", detail="Access denied").model_dump()
+            )
             return
 
         # --- Ack ---
         await _send_json(ws, WSAckPayload(job_id=job_id_str).model_dump())
 
         # --- Already completed? Send result immediately ---
-        if submission.status == "completed":
+        if submission.status == SubmissionStatus.COMPLETED:
             payload = WSResultPayload(
                 job_id=job_id_str,
                 status=submission.status,
                 verdict=submission.verdict,
                 execution_time_ms=submission.execution_time_ms,
-                memory_used_mb=float(submission.memory_used_mb) if submission.memory_used_mb else None,
+                memory_used_mb=float(submission.memory_used_mb)
+                if submission.memory_used_mb
+                else None,
                 stdout_snippet=submission.stdout_snippet,
                 stderr_snippet=submission.stderr_snippet,
             )
@@ -98,6 +110,7 @@ async def websocket_endpoint(ws: WebSocket, job_id: uuid.UUID, token: str) -> No
         ping_task = asyncio.create_task(ping_loop())
 
         try:
+
             async def listen() -> dict:
                 async for message in pubsub.listen():
                     if message["type"] == "message":
@@ -118,7 +131,5 @@ async def websocket_endpoint(ws: WebSocket, job_id: uuid.UUID, token: str) -> No
         await pubsub.unsubscribe()
         await pubsub.close()
         active_connections.pop(job_id_str, None)
-        try:
+        with contextlib.suppress(Exception):
             await ws.close(code=1000)
-        except Exception:
-            pass

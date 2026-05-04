@@ -6,6 +6,7 @@ LANGUAGE_CONFIG maps a language string to its:
 - compile_artifact : expected output file produced by compiler (None = interpreted)
 - run_cmd     : shell command run inside the execution container
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

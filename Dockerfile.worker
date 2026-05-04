@@ -1,15 +1,20 @@
 FROM python:3.11-slim-bookworm
 
-# Install Docker CLI so the worker can run sandbox containers via socket
+# Install Docker CLI so the worker can talk to the daemon
 RUN apt-get update && apt-get install -y --no-install-recommends \
         docker.io \
         ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+# Create a clean, non-root user
+RUN groupadd -r celeryuser && useradd -r -g celeryuser celeryuser
+
 WORKDIR /app
-
 COPY . .
-RUN pip install --no-cache-dir -e ".[dev]"
+RUN pip install --no-cache-dir -e ".[dev]" && \
+    chown -R celeryuser:celeryuser /app
 
-# Default command — overridden per service in docker-compose.yml
+# Switch to the non-root user
+USER celeryuser
+
 CMD ["celery", "-A", "worker.app", "worker", "--loglevel=info", "--concurrency=2"]

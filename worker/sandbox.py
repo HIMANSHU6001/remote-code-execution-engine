@@ -3,9 +3,10 @@
 All input files are written to the host filesystem BEFORE the execution
 container is launched. The container mounts the job directory read-only.
 """
+
 from __future__ import annotations
 
-import os
+import contextlib
 import shutil
 from pathlib import Path
 
@@ -48,7 +49,5 @@ def prepare_sandbox(
 
 def cleanup_sandbox(job_dir: Path) -> None:
     """Remove the job directory tree. Called in the task's finally block."""
-    try:
+    with contextlib.suppress(Exception):
         shutil.rmtree(job_dir, ignore_errors=True)
-    except Exception:
-        pass  # best-effort; sweep_sandbox_dirs will catch stragglers

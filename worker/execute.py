@@ -4,14 +4,21 @@ One execution container is launched per submission (sleep infinity).
 Individual test cases are driven via `docker exec` calls, reusing the
 same container to avoid per-test-case container startup overhead.
 """
+
 from __future__ import annotations
 
+import logging
+import os
 import secrets
 import subprocess
+import time
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from config.settings import settings
+
+# Use proper logging instead of print
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -29,17 +36,43 @@ def launch_exec_container(
     image: str,
     memory_mb: int,
 ) -> str:
-    """Start a long-lived execution container and return its name.
+    """Start a long-lived execution container and return its name."""
 
-    The container runs `sleep infinity` and stays alive while the worker
-    drives individual test cases via `docker exec`.
-    """
+    host_root = os.environ.get("HOST_PROJECT_ROOT")
+    if not host_root:
+        raise RuntimeError(
+            "HOST_PROJECT_ROOT env var is missing. Cannot translate paths for Docker Daemon."
+        )
+
+    host_root = host_root.replace("\\", "/").rstrip("/")
+
+    host_sandbox_root = os.environ.get("HOST_SANDBOX_ROOT")
+    if host_sandbox_root:
+        host_sandbox_root = host_sandbox_root.replace("\\", "/").rstrip("/")
+    else:
+        host_sandbox_root = f"{host_root}/docker/sandbox"
+
+    job_dir_str = str(job_dir).replace("\\", "/")
+    relative_job_path = job_dir_str.replace("/app/", "").lstrip("/")
+
+    job_dir_posix = PurePosixPath(job_dir_str)
+    sandbox_base_posix = PurePosixPath(settings.SANDBOX_BASE_DIR)
+    try:
+        sandbox_rel = job_dir_posix.relative_to(sandbox_base_posix)
+        host_volume_path = f"{host_sandbox_root}/{sandbox_rel.as_posix()}"
+    except ValueError:
+        host_volume_path = f"{host_root}/{relative_job_path}"
+
+    local_seccomp_path = "/app/infra/seccomp.json"
+
     name = f"rce-{secrets.token_hex(8)}"
     cmd = [
-        "docker", "run", "--detach",
+        "docker",
+        "run",
+        "--detach",
         f"--name={name}",
         f"--memory={memory_mb}m",
-        f"--memory-swap={memory_mb}m",   # disable swap
+        f"--memory-swap={memory_mb}m",
         "--cpus=0.5",
         "--pids-limit=64",
         "--ulimit=nofile=64:64",
@@ -49,12 +82,51 @@ def launch_exec_container(
         "--network=none",
         "--cap-drop=ALL",
         "--security-opt=no-new-privileges",
-        f"--security-opt=seccomp={_SECCOMP_PROFILE}",
-        f"--volume={job_dir}:/sandbox:ro",
+        f"--security-opt=seccomp={local_seccomp_path}",
+        f"--volume={host_volume_path}:/sandbox:ro",
         image,
-        "sleep", "infinity",
+        "sleep",
+        "infinity",
     ]
-    subprocess.run(cmd, check=True, capture_output=True)
+
+    logger.info(
+        "Launching execution container: %s image=%s host_volume=%s memory_mb=%s",
+        name,
+        image,
+        host_volume_path,
+        memory_mb,
+    )
+
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+
+        time.sleep(0.5)
+
+        inspect_cmd = ["docker", "inspect", "-f", "{{.State.Status}}", name]
+        status = subprocess.run(
+            inspect_cmd, check=True, capture_output=True, text=True
+        ).stdout.strip()
+
+        if status != "running":
+            logs = subprocess.run(["docker", "logs", name], capture_output=True, text=True).stderr
+
+            subprocess.run(["docker", "rm", "-f", name], capture_output=True)
+
+            raise RuntimeError(
+                f"Container died instantly. Status: {status}. Container Logs: {logs}"
+            )
+    except subprocess.CalledProcessError as e:
+        stderr = (e.stderr or "").strip()
+        stdout = (e.stdout or "").strip()
+        logger.error(
+            "Docker run failed. returncode=%s cmd=%s stdout=%s stderr=%s",
+            e.returncode,
+            " ".join(cmd),
+            stdout,
+            stderr,
+        )
+        raise RuntimeError(f"Docker daemon rejected the container launch.\nSTDERR: {stderr}") from e
+
     return name
 
 
@@ -64,27 +136,37 @@ def exec_test_case(
     test_case_index: int,
     time_sec: int,
 ) -> ExecResult:
-    """Execute one test case inside the running container.
-
-    Uses GNU `timeout` for wall-clock enforcement. After execution reads
-    stdout/stderr/exit_code from /tmp and cleans up for the next test case.
-    """
+    """Execute one test case inside the running container."""
     input_path = f"/sandbox/inputs/tc_{test_case_index}.txt"
     exec_cmd = (
         f"timeout {time_sec} {run_cmd} < {input_path} "
         f"> /tmp/stdout.txt 2>/tmp/stderr.txt; echo $? > /tmp/exit_code.txt"
     )
 
-    subprocess.run(
-        ["docker", "exec", container_name, "sh", "-c", exec_cmd],
-        check=False,
-    )
+    docker_cmd = ["docker", "exec", container_name, "sh", "-c", exec_cmd]
+    logger.info(f"Executing TC {test_case_index} in {container_name}")
+
+    try:
+        # Capture the result of the docker exec command
+        result = subprocess.run(docker_cmd, check=False, capture_output=True, text=True)
+
+        # TELEMETRY UPGRADE 1: If the shell itself spits out an error, log it!
+        if result.stderr:
+            logger.error(f"NATIVE DOCKER EXEC STDERR: {result.stderr.strip()}")
+
+    except Exception as e:
+        logger.error(f"Failed to execute test case via docker exec: {str(e)}")
+        raise
 
     def _read(path: str, cap: int) -> str:
         out = subprocess.run(
             ["docker", "exec", container_name, "cat", path],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
+        # TELEMETRY UPGRADE 2: If cat fails (e.g., the file was never created), log the reason
+        if out.returncode != 0:
+            logger.warning(f"Could not read {path} from container: {out.stderr.strip()}")
         return out.stdout[:cap]
 
     stdout = _read("/tmp/stdout.txt", settings.STDOUT_CAP_BYTES)
@@ -94,8 +176,16 @@ def exec_test_case(
 
     # Clean up temp files for the next test case
     subprocess.run(
-        ["docker", "exec", container_name, "rm", "-f",
-         "/tmp/stdout.txt", "/tmp/stderr.txt", "/tmp/exit_code.txt"],
+        [
+            "docker",
+            "exec",
+            container_name,
+            "rm",
+            "-f",
+            "/tmp/stdout.txt",
+            "/tmp/stderr.txt",
+            "/tmp/exit_code.txt",
+        ],
         check=False,
     )
 
@@ -103,5 +193,5 @@ def exec_test_case(
 
 
 def teardown_container(container_name: str) -> None:
-    """Force-remove the execution container. Called in the task's finally block."""
+    """Force-remove the execution container."""
     subprocess.run(["docker", "rm", "-f", container_name], check=False, capture_output=True)

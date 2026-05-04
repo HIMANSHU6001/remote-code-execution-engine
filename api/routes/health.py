@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
@@ -18,7 +20,7 @@ async def health_live() -> dict[str, str]:
 
 
 @router.get("/health/ready", tags=["health"], response_model=None)
-async def health_ready(db: AsyncSession = Depends(get_db)) -> dict | JSONResponse:
+async def health_ready(db: Annotated[AsyncSession, Depends(get_db)]) -> dict | JSONResponse:
     checks: dict[str, str] = {}
     ready = True
 

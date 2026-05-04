@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from urllib.parse import quote
 
-import resend  # type: ignore[reportMissingModuleSource]
+import resend
 
 from config.settings import settings
 
@@ -24,7 +24,7 @@ def send_verification_email(to_email: str, raw_token: str) -> None:
     verify_url = _verification_url(raw_token)
     html = (
         "<p>Welcome! Please verify your email to complete sign-up.</p>"
-        f"<p><a href=\"{verify_url}\">Verify email</a></p>"
+        f'<p><a href="{verify_url}">Verify email</a></p>'
         "<p>If you did not request this, you can safely ignore this email.</p>"
     )
 
