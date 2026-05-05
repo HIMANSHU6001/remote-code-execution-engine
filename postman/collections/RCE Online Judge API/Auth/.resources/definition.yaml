@@ -1,5 +1,0 @@
-$kind: collection
-name: Auth
-description: |-
-  Authentication endpoints for user signup, login, email verification, and social authentication.
-order: 1000

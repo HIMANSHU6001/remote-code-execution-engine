@@ -1,5 +1,0 @@
-$kind: collection
-name: Health
-description: |-
-  Service health and readiness endpoints.
-order: 1500
