@@ -16,7 +16,7 @@ build cpp    cpp
 build clang  clang
 build java   java
 build python python
-build js     js
+build nodejs     nodejs
 
 echo ""
 echo "All images built successfully."
