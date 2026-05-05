@@ -10,7 +10,10 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+from worker.sandbox import get_host_path
+
 _COMPILE_TIMEOUT_SEC = 30
+
 
 # Docker flags shared by compilation containers
 _COMPILE_FLAGS = [
@@ -19,8 +22,8 @@ _COMPILE_FLAGS = [
     "--cpus=1.0",
     "--pids-limit=32",
     "--network=none",
-    "--cap-drop=ALL",
     "--security-opt=no-new-privileges",
+    "--user=root",
 ]
 
 
@@ -44,11 +47,12 @@ def run_compile_container(
     Returns:
         True if the artifact exists after compilation, False on CE.
     """
+    host_volume_path = get_host_path(job_dir)
     cmd = [
         "docker",
         "run",
         *_COMPILE_FLAGS,
-        f"--volume={job_dir}:/sandbox",
+        f"--volume={host_volume_path}:/sandbox",
         image,
         "sh",
         "-c",

@@ -54,7 +54,10 @@
         "getdents",
         "getdents64",
         "close_range",
-        "faccessat2"
+        "faccessat2",
+        "eventfd",
+        "eventfd2",
+        "socketpair"
       ],
       "action": "SCMP_ACT_ALLOW"
     },

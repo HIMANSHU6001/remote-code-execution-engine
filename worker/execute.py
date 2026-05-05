@@ -17,6 +17,8 @@ from pathlib import Path, PurePosixPath
 
 from config.settings import settings
 
+from worker.sandbox import get_host_path
+
 # Use proper logging instead of print
 logger = logging.getLogger(__name__)
 
@@ -38,30 +40,7 @@ def launch_exec_container(
 ) -> str:
     """Start a long-lived execution container and return its name."""
 
-    host_root = os.environ.get("HOST_PROJECT_ROOT")
-    if not host_root:
-        raise RuntimeError(
-            "HOST_PROJECT_ROOT env var is missing. Cannot translate paths for Docker Daemon."
-        )
-
-    host_root = host_root.replace("\\", "/").rstrip("/")
-
-    host_sandbox_root = os.environ.get("HOST_SANDBOX_ROOT")
-    if host_sandbox_root:
-        host_sandbox_root = host_sandbox_root.replace("\\", "/").rstrip("/")
-    else:
-        host_sandbox_root = f"{host_root}/docker/sandbox"
-
-    job_dir_str = str(job_dir).replace("\\", "/")
-    relative_job_path = job_dir_str.replace("/app/", "").lstrip("/")
-
-    job_dir_posix = PurePosixPath(job_dir_str)
-    sandbox_base_posix = PurePosixPath(settings.SANDBOX_BASE_DIR)
-    try:
-        sandbox_rel = job_dir_posix.relative_to(sandbox_base_posix)
-        host_volume_path = f"{host_sandbox_root}/{sandbox_rel.as_posix()}"
-    except ValueError:
-        host_volume_path = f"{host_root}/{relative_job_path}"
+    host_volume_path = get_host_path(job_dir)
 
     local_seccomp_path = "/app/infra/seccomp.json"
 
@@ -75,7 +54,7 @@ def launch_exec_container(
         f"--memory-swap={memory_mb}m",
         "--cpus=0.5",
         "--pids-limit=64",
-        "--ulimit=nofile=64:64",
+        "--ulimit=nofile=256:256",
         "--ulimit=fsize=5000000",
         "--read-only",
         "--tmpfs=/tmp:rw,size=50m,noexec",
