@@ -8,6 +8,13 @@ class Language(str, Enum):
     NODEJS = "nodejs"
 
 
+class SupportedLanguage(str, Enum):
+    PYTHON = "python"
+    CPP = "cpp"
+    JAVA = "java"
+    NODEJS = "nodejs"
+
+
 class SubmissionStatus(str, Enum):
     PENDING = "pending"
     RUNNING = "running"
@@ -22,3 +29,9 @@ class Verdict(str, Enum):
     RE = "RE"  # Runtime Error
     CE = "CE"  # Compilation Error
     IE = "IE"  # Internal Error
+
+
+class Difficulty(str, Enum):
+    EASY = "easy"
+    MEDIUM = "medium"
+    HARD = "hard"

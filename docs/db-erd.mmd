@@ -9,29 +9,49 @@ erDiagram
       TIMESTAMP updated_at
     }
 
+    PROBLEM_LANGUAGE_CONFIGS {
+      UUID problem_id PK FK
+      VARCHAR_6 language PK
+      TEXT boilerplate
+      TEXT driver_code
+    }
+
+    PROBLEM_TOPICS {
+      UUID problem_id PK FK
+      INTEGER topic_id PK FK
+    }
+
     PROBLEMS {
       UUID id PK
       TEXT title
       TEXT description
+      VARCHAR_6 difficulty
       INTEGER base_time_limit_ms
       INTEGER base_memory_limit_mb
       UUID created_by FK
       TIMESTAMP created_at
       TIMESTAMP updated_at
+      ARRAY hints
     }
 
     SUBMISSIONS {
       UUID id PK
       UUID user_id FK
       UUID problem_id FK
-      TEXT language
+      VARCHAR_6 language
       TEXT code
-      TEXT status
-      TEXT verdict
+      VARCHAR_9 status
+      VARCHAR_3 verdict
       INTEGER execution_time_ms
       NUMERIC_8_2 memory_used_mb
       TEXT stdout_snippet
       TEXT stderr_snippet
+      TEXT actual_output
+      TEXT expected_output
+      BOOLEAN is_submit
+      INTEGER passed_test_cases
+      INTEGER total_test_cases
+      UUID failed_test_case_id FK
       TIMESTAMP created_at
       TIMESTAMP updated_at
     }
@@ -44,6 +64,12 @@ erDiagram
       BOOLEAN is_sample
       INTEGER ordering
       TIMESTAMP created_at
+    }
+
+    TOPICS {
+      INTEGER id PK
+      VARCHAR name UK
+      VARCHAR slug UK
     }
 
     USERS {
@@ -59,8 +85,12 @@ erDiagram
       TIMESTAMP updated_at
     }
 
+    PROBLEMS ||--o{ PROBLEM_LANGUAGE_CONFIGS : problem_id
+    PROBLEMS ||--o{ PROBLEM_TOPICS : problem_id
     PROBLEMS ||--o{ SUBMISSIONS : problem_id
     PROBLEMS ||--o{ TEST_CASES : problem_id
+    TEST_CASES ||--o{ SUBMISSIONS : failed_test_case_id
+    TOPICS ||--o{ PROBLEM_TOPICS : topic_id
     USERS ||--o{ OAUTH_ACCOUNTS : user_id
     USERS ||--o{ PROBLEMS : created_by
     USERS ||--o{ SUBMISSIONS : user_id

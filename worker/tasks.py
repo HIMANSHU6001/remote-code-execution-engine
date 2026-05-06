@@ -32,6 +32,7 @@ F = TypeVar("F", bound=Callable[..., object])
 def _typed_task(*args: Any, **kwargs: Any) -> Callable[[F], F]:
     return cast(Callable[[F], F], app.task(*args, **kwargs))
 
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -45,15 +46,29 @@ def _normalise(text: str) -> str:
     return "\n".join(lines)
 
 
-def _classify_verdict(exit_code: int, stdout: str, expected: str) -> Verdict:
+def _evaluate_output(
+    exit_code: int, stdout: str, expected: str, delimiter: str
+) -> tuple[Verdict, str, str | None]:
     if exit_code == 124:
-        return Verdict.TLE
-    elif exit_code != 0:
-        return Verdict.RE
-    elif _normalise(stdout) != _normalise(expected):
-        return Verdict.WA
-    else:
-        return Verdict.ACC
+        return Verdict.TLE, stdout, None
+
+    if delimiter not in stdout:
+        return Verdict.RE, stdout, None
+
+    parts = stdout.split(delimiter)
+    stdout_snippet = parts[0]
+    engine_eval_str = parts[1].strip()
+
+    try:
+        engine_eval = json.loads(engine_eval_str)
+        expected_json = json.loads(expected)
+
+        if engine_eval == expected_json:
+            return Verdict.ACC, stdout_snippet, engine_eval_str
+        else:
+            return Verdict.WA, stdout_snippet, engine_eval_str
+    except (json.JSONDecodeError, ValueError):
+        return Verdict.RE, stdout_snippet, engine_eval_str
 
 
 def _finalise(
@@ -63,6 +78,11 @@ def _finalise(
     memory_mb: int,
     stdout_snippet: str,
     stderr_snippet: str,
+    passed_cases: int = 0,
+    total_cases: int = 0,
+    failed_tc_id: Any | None = None,
+    actual: str | None = None,
+    expected: str | None = None,
 ) -> None:
     """Write final result to PostgreSQL and publish to Redis Pub/Sub."""
     with get_sync_db() as db:
@@ -74,7 +94,12 @@ def _finalise(
                     execution_time_ms = :exec_time_ms,
                     memory_used_mb = :memory_mb,
                     stdout_snippet = :stdout_snippet,
-                    stderr_snippet = :stderr_snippet
+                    stderr_snippet = :stderr_snippet,
+                    passed_test_cases = :passed,
+                    total_test_cases = :total,
+                    failed_test_case_id = :failed_id,
+                    actual_output = :actual,
+                    expected_output = :expected
                 WHERE id = :job_id
             """),
             {
@@ -83,6 +108,11 @@ def _finalise(
                 "memory_mb": memory_mb,
                 "stdout_snippet": stdout_snippet[:1024],
                 "stderr_snippet": stderr_snippet[:512],
+                "passed": passed_cases,
+                "total": total_cases,
+                "failed_id": failed_tc_id,
+                "actual": actual,
+                "expected": expected,
                 "job_id": job_id,
             },
         )
@@ -95,6 +125,11 @@ def _finalise(
         "memory_used_mb": memory_mb,
         "stdout_snippet": stdout_snippet[:1024],
         "stderr_snippet": stderr_snippet[:512],
+        "passed_test_cases": passed_cases,
+        "total_test_cases": total_cases,
+        "failed_test_case_id": str(failed_tc_id) if failed_tc_id else None,
+        "actual_output": actual,
+        "expected_output": expected,
     }
     _redis.publish(f"job_updates:{job_id}", json.dumps(payload))
 
@@ -138,18 +173,19 @@ def evaluate_submission(self: Task, job_id: str) -> None:
             if transition_result.rowcount == 0:
                 print(f"Submission {job_id} is already running or completed — dropping task")
                 return
-
+            
             submission_row = db.execute(
-                text("SELECT language, code, problem_id FROM submissions WHERE id=:id"),
+                text("SELECT language, code, problem_id, is_submit FROM submissions WHERE id=:id"),
                 {"id": job_id},
             ).fetchone()
             if submission_row is None:
                 _finalise(job_id, Verdict.IE, 0, 0, "", "Submission not found")
                 return
-            language, code, problem_id = (
+            language, code, problem_id, is_submit = (
                 submission_row.language,
                 submission_row.code,
                 submission_row.problem_id,
+                submission_row.is_submit,
             )
 
             problem_row = db.execute(
@@ -160,12 +196,29 @@ def evaluate_submission(self: Task, job_id: str) -> None:
                 _finalise(job_id, Verdict.IE, 0, 0, "", "Problem not found")
                 return
 
-            test_cases = db.execute(
+            # Load test cases: samples only for Run, all for Submit
+            tc_query = "SELECT id, input_data, expected_output FROM test_cases WHERE problem_id=:pid"
+            if not is_submit:
+                tc_query += " AND is_sample=TRUE"
+            tc_query += " ORDER BY ordering ASC"
+
+            test_cases = db.execute(text(tc_query), {"pid": problem_id}).fetchall()
+            if not test_cases:
+                _finalise(job_id, Verdict.IE, 0, 0, "", "No test cases found for problem")
+                return
+
+            config_row = db.execute(
                 text(
-                    "SELECT id, input_data, expected_output FROM test_cases WHERE problem_id=:pid ORDER BY ordering ASC"
+                    "SELECT driver_code FROM problem_language_configs WHERE problem_id=:pid AND language=:lang"
                 ),
-                {"pid": problem_id},
-            ).fetchall()
+                {"pid": problem_id, "lang": getattr(language, "value", language)},
+            ).fetchone()
+
+            if config_row is None:
+                _finalise(
+                    job_id, Verdict.IE, 0, 0, "", "Language configuration not found for problem"
+                )
+                return
 
         # --- 2. Compute fair limits ---
         limits = compute_fair_limits(
@@ -175,24 +228,25 @@ def evaluate_submission(self: Task, job_id: str) -> None:
         # --- 3. Runner config ---
         runner = LANGUAGE_CONFIG[language]
         print(
-            f"Evaluating submission {job_id} with language={language}, time_limit={limits.time_sec}s, memory_limit={limits.memory_mb}MB"
+            f"Evaluating submission {job_id} (is_submit={is_submit}) with language={language}"
         )
 
         # --- 4. Prepare sandbox ---
+        delimiter = f"---RCE_EXEC_{job_id}---"
+        secure_driver = config_row.driver_code.replace("{job_id}", str(job_id))
+        final_code = f"{code}\n\n{secure_driver}"
+
         job_dir = prepare_sandbox(
             job_id=job_id,
-            source_code=code,
+            source_code=final_code,
             source_filename=runner.source_file,
             test_inputs=[tc.input_data for tc in test_cases],
         )
-        print(f"Prepared sandbox for submission {job_id}")
 
         image = f"rce-{language}:latest"
 
         # --- 5. Compile (if needed) ---
         if runner.compile_cmd:
-            if runner.compile_artifact is None:
-                raise RuntimeError("Missing compile artifact for language runner")
             success = run_compile_container(
                 job_dir=job_dir,
                 image=image,
@@ -200,26 +254,27 @@ def evaluate_submission(self: Task, job_id: str) -> None:
                 compile_artifact=runner.compile_artifact,
             )
             if not success:
-                ce_err = ""
-                err_file = job_dir / "compile_err.txt"
-                if err_file.exists():
-                    ce_err = err_file.read_text(encoding="utf-8", errors="replace")[
-                        : settings.COMPILE_ERR_CAP_BYTES
-                    ]
+                ce_err = (job_dir / "compile_err.txt").read_text(encoding="utf-8")[:1024]
                 _finalise(job_id, Verdict.CE, 0, limits.memory_mb, "", ce_err)
-                print(f"Compilation failed for submission {job_id}")
                 return
+
         # --- 6. Launch execution container ---
         container_name = launch_exec_container(
             job_dir=job_dir, image=image, memory_mb=limits.memory_mb
         )
-        print(f"Execution container launched for submission {job_id}")
 
-        # --- 7. Execute test cases (fail-fast) ---
+        # --- 7. Execute & Evaluate ---
         verdict = Verdict.ACC
-        last_result: ExecResult | None = None
-        total_time_ms = 0
-        start = time.monotonic()
+        passed_cases = 0
+        total_cases = len(test_cases)
+        failed_tc_id = None
+        actual_output = None
+        expected_output = None
+        last_stdout = ""
+        last_stderr = ""
+        run_details = []
+
+        start_time = time.monotonic()
 
         for idx, tc in enumerate(test_cases):
             exec_result = exec_test_case(
@@ -228,21 +283,59 @@ def evaluate_submission(self: Task, job_id: str) -> None:
                 test_case_index=idx,
                 time_sec=limits.time_sec,
             )
-            last_result = exec_result
-            tc_verdict = _classify_verdict(
-                exec_result.exit_code, exec_result.stdout, tc.expected_output
+            last_stdout = exec_result.stdout
+            last_stderr = exec_result.stderr
+
+            tc_verdict, stdout_snip, engine_actual = _evaluate_output(
+                exec_result.exit_code, exec_result.stdout, tc.expected_output, delimiter
             )
-            if tc_verdict != Verdict.ACC:
-                verdict = tc_verdict
-                break
 
-        total_time_ms = int((time.monotonic() - start) * 1000)
+            if tc_verdict == Verdict.ACC:
+                passed_cases += 1
+            
+            if not is_submit:
+                # Path A: Run Code (Full evaluation)
+                run_details.append({
+                    "test_case_id": str(tc.id),
+                    "verdict": tc_verdict.value,
+                    "actual": engine_actual,
+                    "expected": tc.expected_output
+                })
+            else:
+                # Path B: Submit Code (Fail-Fast)
+                if tc_verdict != Verdict.ACC:
+                    verdict = tc_verdict
+                    failed_tc_id = tc.id
+                    actual_output = engine_actual
+                    expected_output = tc.expected_output
+                    last_stdout = stdout_snip
+                    break
 
-        stdout_snip = last_result.stdout if last_result else ""
-        stderr_snip = last_result.stderr if last_result else ""
+        exec_time_ms = int((time.monotonic() - start_time) * 1000)
+
+        if not is_submit:
+            # For Path A, verdict is "Finished" or similar, but we'll use ACC if all passed
+            if passed_cases < total_cases:
+                verdict = Verdict.WA
+            # Use stdout_snippet to pass back the run_details as JSON
+            stdout_snip = json.dumps(run_details)
+        else:
+            stdout_snip = last_stdout
 
         # --- 8. Finalise ---
-        _finalise(job_id, verdict, total_time_ms, limits.memory_mb, stdout_snip, stderr_snip)
+        _finalise(
+            job_id=job_id,
+            verdict=verdict,
+            exec_time_ms=exec_time_ms,
+            memory_mb=limits.memory_mb,
+            stdout_snippet=stdout_snip,
+            stderr_snippet=last_stderr,
+            passed_cases=passed_cases,
+            total_cases=total_cases,
+            failed_tc_id=failed_tc_id,
+            actual=actual_output,
+            expected=expected_output
+        )
         print(f"Finalised evaluation for submission {job_id}")
 
     except Exception:

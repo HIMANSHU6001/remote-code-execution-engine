@@ -9,16 +9,56 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from db.models import OAuthAccount, Problem, Submission, User
+from db.models import OAuthAccount, Problem, Submission, Topic, User
 
 # ---------------------------------------------------------------------------
 # Problems
 # ---------------------------------------------------------------------------
 
 
+async def create_problem(
+    db: AsyncSession,
+    *,
+    title: str,
+    description: str,
+    difficulty: str,
+    base_time_limit_ms: int,
+    base_memory_limit_mb: int,
+    created_by: uuid.UUID,
+    test_cases: list[dict],
+    topics: list[Topic],
+    hints: list[str],
+) -> Problem:
+    from db.models import TestCase
+
+    problem = Problem(
+        title=title,
+        description=description,
+        difficulty=difficulty,
+        base_time_limit_ms=base_time_limit_ms,
+        base_memory_limit_mb=base_memory_limit_mb,
+        created_by=created_by,
+        topics=topics,
+        hints=hints,
+    )
+    for tc in test_cases:
+        problem.test_cases.append(
+            TestCase(
+                input_data=tc["input_data"],
+                expected_output=tc["expected_output"],
+                is_sample=tc["is_sample"],
+                ordering=tc["ordering"],
+            )
+        )
+    db.add(problem)
+    await db.commit()
+    await db.refresh(problem)
+    return problem
+
+
 async def get_problem(db: AsyncSession, problem_id: uuid.UUID) -> Problem | None:
     result = await db.execute(select(Problem).where(Problem.id == problem_id))
-    return result.scalar_one_or_none()
+    return result.unique().scalar_one_or_none()
 
 
 async def get_problem_with_sample_cases(db: AsyncSession, problem_id: uuid.UUID) -> Problem | None:
@@ -29,7 +69,7 @@ async def get_problem_with_sample_cases(db: AsyncSession, problem_id: uuid.UUID)
     result = await db.execute(
         select(Problem).options(selectinload(Problem.test_cases)).where(Problem.id == problem_id)
     )
-    return result.scalar_one_or_none()
+    return result.unique().scalar_one_or_none()
 
 
 # ---------------------------------------------------------------------------

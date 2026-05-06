@@ -62,6 +62,7 @@ def launch_exec_container(
         "--cap-drop=ALL",
         "--security-opt=no-new-privileges",
         f"--security-opt=seccomp={local_seccomp_path}",
+        # "--security-opt=seccomp=unconfined",
         f"--volume={host_volume_path}:/sandbox:ro",
         image,
         "sleep",

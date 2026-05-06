@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import uuid
 
-from pydantic import UUID4, BaseModel, EmailStr, field_validator
+from pydantic import UUID4, BaseModel, ConfigDict, EmailStr, Field, field_validator
 
-from shared.enums import Language, SubmissionStatus, Verdict
+from shared.enums import Difficulty, Language, SubmissionStatus, Verdict
 
 # ---------------------------------------------------------------------------
 # Inbound
@@ -41,6 +41,8 @@ class SubmissionDetailResponse(BaseModel):
     memory_used_mb: float | None = None
     stdout_snippet: str | None = None
     stderr_snippet: str | None = None
+    actual_output: str | None = None
+    expected_output: str | None = None
 
 
 class ProblemSampleTestCase(BaseModel):
@@ -50,12 +52,59 @@ class ProblemSampleTestCase(BaseModel):
     is_sample: bool
 
 
-class ProblemResponse(BaseModel):
+class TopicResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    slug: str
+
+
+class ProblemListResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     title: str
+    difficulty: Difficulty
+    topics: list[TopicResponse] = []
+
+
+class PaginatedProblemResponse(BaseModel):
+    total: int
+    page: int
+    size: int
+    items: list[ProblemListResponse]
+
+
+class ProblemResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    title: str
+    difficulty: Difficulty
     base_time_limit_ms: int
     base_memory_limit_mb: int
+    hints: list[str] = []
+    topics: list[TopicResponse] = []
     sample_test_cases: list[ProblemSampleTestCase]
+
+
+class TestCaseCreateRequest(BaseModel):
+    input_data: str
+    expected_output: str
+    is_sample: bool = False
+    ordering: int = 0
+
+
+class ProblemCreateRequest(BaseModel):
+    title: str
+    description: str
+    difficulty: Difficulty
+    base_time_limit_ms: int
+    base_memory_limit_mb: int
+    hints: list[str] = Field(default=[], max_length=4)
+    topic_ids: list[int] = Field(default=[])
+    test_cases: list[TestCaseCreateRequest]
 
 
 # ---------------------------------------------------------------------------
@@ -81,6 +130,8 @@ class WSResultPayload(BaseModel):
     memory_used_mb: float | None = None
     stdout_snippet: str | None = None
     stderr_snippet: str | None = None
+    actual_output: str | None = None
+    expected_output: str | None = None
 
 
 class WSErrorPayload(BaseModel):
