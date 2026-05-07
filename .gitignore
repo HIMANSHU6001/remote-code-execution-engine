@@ -33,6 +33,7 @@ htmlcov/
 
 # Type checking
 .mypy_cache/
+.ruff_cache/
 
 # Editors
 .vscode/
@@ -50,6 +51,3 @@ Thumbs.db
 
 # Logs
 *.log
-
-# Fern SDK output
-sdks/

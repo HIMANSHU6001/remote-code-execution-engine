@@ -1,10 +1,10 @@
 import asyncio
 import json
+
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.base import AsyncSessionLocal
-from db.models import User, Topic, Problem, TestCase, ProblemLanguageConfig
+from db.models import Problem, ProblemLanguageConfig, TestCase, Topic, User
 from shared.enums import Difficulty, SupportedLanguage
 
 
