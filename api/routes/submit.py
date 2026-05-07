@@ -52,6 +52,7 @@ async def submit_code(
         problem_id=body.problem_id,
         language=body.language.value,
         code=body.code,
+        is_submit=body.is_submit,
     )
 
     print(f"Enqueued submission {job_id} for evaluation")

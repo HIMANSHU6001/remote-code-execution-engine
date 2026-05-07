@@ -15,7 +15,14 @@ from db.base import get_db
 from db.models import Problem, Topic
 from db.queries import create_problem, get_problem_with_sample_cases
 from shared.enums import Difficulty
-from shared.models import PaginatedProblemResponse, ProblemCreateRequest, ProblemListResponse, ProblemResponse, ProblemSampleTestCase, TopicResponse
+from shared.models import (
+    PaginatedProblemResponse,
+    ProblemCreateRequest,
+    ProblemListResponse,
+    ProblemResponse,
+    ProblemSampleTestCase,
+    TopicResponse,
+)
 
 router = APIRouter()
 

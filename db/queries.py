@@ -85,6 +85,7 @@ async def create_submission(
     problem_id: uuid.UUID,
     language: str,
     code: str,
+    is_submit: bool = True,
 ) -> Submission:
     submission = Submission(
         id=job_id,
@@ -93,6 +94,7 @@ async def create_submission(
         language=language,
         code=code,
         status="pending",
+        is_submit=is_submit,
     )
     db.add(submission)
     await db.commit()

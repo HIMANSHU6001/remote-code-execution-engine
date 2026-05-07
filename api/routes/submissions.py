@@ -44,4 +44,9 @@ async def get_submission_status(
         else None,
         stdout_snippet=submission.stdout_snippet,
         stderr_snippet=submission.stderr_snippet,
+        actual_output=submission.actual_output,
+        expected_output=submission.expected_output,
+        passed_test_cases=submission.passed_test_cases,
+        total_test_cases=submission.total_test_cases,
+        failed_test_case_id=submission.failed_test_case_id,
     )

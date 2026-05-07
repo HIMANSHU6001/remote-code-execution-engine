@@ -15,6 +15,7 @@ class SubmitRequest(BaseModel):
     problem_id: UUID4
     language: Language
     code: str
+    is_submit: bool = True
 
     @field_validator("code")
     @classmethod
@@ -43,6 +44,9 @@ class SubmissionDetailResponse(BaseModel):
     stderr_snippet: str | None = None
     actual_output: str | None = None
     expected_output: str | None = None
+    passed_test_cases: int = 0
+    total_test_cases: int = 0
+    failed_test_case_id: uuid.UUID | None = None
 
 
 class ProblemSampleTestCase(BaseModel):

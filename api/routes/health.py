@@ -22,7 +22,7 @@ async def health_live() -> dict[str, str]:
 
 @router.get("/health/ready", tags=["health"], response_model=None)
 async def health_ready(
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict[str, str | dict[str, str]] | JSONResponse:
     checks: dict[str, str] = {}
     ready = True

@@ -94,7 +94,12 @@ class OAuthAccount(Base):
 problem_topics = Table(
     "problem_topics",
     Base.metadata,
-    Column("problem_id", UUID(as_uuid=True), ForeignKey("problems.id", ondelete="CASCADE"), primary_key=True),
+    Column(
+        "problem_id",
+        UUID(as_uuid=True),
+        ForeignKey("problems.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
     Column("topic_id", Integer, ForeignKey("topics.id", ondelete="CASCADE"), primary_key=True),
 )
 
@@ -177,8 +182,13 @@ class ProblemLanguageConfig(Base):
         UUID(as_uuid=True), ForeignKey("problems.id", ondelete="CASCADE"), primary_key=True
     )
     language: Mapped[SupportedLanguage] = mapped_column(
-        SAEnum(SupportedLanguage, name="supported_language_enum", create_type=False, values_callable=_enum_values),
-        primary_key=True
+        SAEnum(
+            SupportedLanguage,
+            name="supported_language_enum",
+            create_type=False,
+            values_callable=_enum_values,
+        ),
+        primary_key=True,
     )
     boilerplate: Mapped[str] = mapped_column(Text, nullable=False)
     driver_code: Mapped[str] = mapped_column(Text, nullable=False)
@@ -223,12 +233,16 @@ class Submission(Base):
     actual_output: Mapped[str | None] = mapped_column(Text, nullable=True)
     expected_output: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_submit: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("TRUE"))
-    passed_test_cases: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    passed_test_cases: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
     total_test_cases: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     failed_test_case_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("test_cases.id", ondelete="SET NULL"), nullable=True
     )
-    failed_test_case: Mapped["TestCase | None"] = relationship("TestCase", foreign_keys=[failed_test_case_id])
+    failed_test_case: Mapped["TestCase | None"] = relationship(
+        "TestCase", foreign_keys=[failed_test_case_id]
+    )
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()")
     )
