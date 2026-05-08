@@ -244,8 +244,6 @@ def evaluate_submission(self: Task, job_id: str) -> None:
     job_dir: Path | None = None
 
     try:
-        print(f"Starting evaluation for submission {job_id}", flush=True)
-
         # --- 1. Atomic pending → running ---
         with get_sync_db() as db:
             transition_result = cast(

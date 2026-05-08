@@ -34,9 +34,6 @@ async def submit_code(
     5. rate limit not exceeded — checked here via Redis
     """
     # 4. Problem must exist
-    print(
-        f"Received submission: user_id={user_id}, problem_id={body.problem_id}, language={body.language}, code_size={len(body.code)}"
-    )
     problem = await get_problem(db, body.problem_id)
     if problem is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Problem not found")

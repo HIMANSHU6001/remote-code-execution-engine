@@ -15,3 +15,7 @@ htmlcov
 celerybeat-schedule
 celerybeat.pid
 *.log
+frontend/node_modules
+frontend/.next
+frontend/out
+frontend/build

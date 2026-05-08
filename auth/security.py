@@ -14,7 +14,6 @@ _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:
     hash_pass = str(_pwd_context.hash(password))
-    print(f"Hashing password: {password} -> {hash_pass}")
     return hash_pass
 
 
