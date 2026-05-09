@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         default-jdk-headless \
         coreutils \
         ca-certificates \
+        libjson-simple-java \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -g 10001 runner && useradd -u 10001 -g runner -s /bin/false -M runner

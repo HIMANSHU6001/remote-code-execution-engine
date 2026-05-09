@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         clang \
         coreutils \
         ca-certificates \
+        nlohmann-json3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Non-root runner user

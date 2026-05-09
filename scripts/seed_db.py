@@ -484,6 +484,8 @@ _user_stdout = io.StringIO()
 _orig_stdout = sys.stdout
 sys.stdout = _user_stdout
 
+{user_code}
+
 def run_test():
     try:
         with open("/sandbox/testcases.json", "r") as f:
@@ -493,9 +495,6 @@ def run_test():
 
     results = []
     start_total = time.perf_counter()
-    
-    # Injected User Code
-    {user_code}
     
     sol = Solution()
     for i, tc in enumerate(testcases):
@@ -527,7 +526,7 @@ if __name__ == "__main__":
 """
 
         NODEJS_DRIVER = r"""const fs = require('fs');
-const sol_mod = {user_code}; 
+{user_code}
 
 function runTest() {
     let testcases = [];
@@ -571,6 +570,129 @@ function runTest() {
 runTest();
 """
 
+        CPP_DRIVER = r"""#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <chrono>
+#include <sstream>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
+{user_code}
+
+int main() {
+    std::ifstream f("/sandbox/testcases.json");
+    if (!f.is_open()) return 1;
+    json testcases = json::parse(f);
+
+    auto start = std::chrono::high_resolution_clock::now();
+    Solution sol;
+    json results = json::array();
+
+    for (int i = 0; i < testcases.size(); ++i) {
+        auto& tc = testcases[i];
+        
+        std::stringstream ss;
+        auto old_buf = std::cout.rdbuf(ss.rdbuf());
+        
+        json actual;
+        try {
+            {call_logic}
+        } catch (const std::exception& e) {
+            actual = std::string("Runtime Error: ") + e.what();
+        } catch (...) {
+            actual = "Runtime Error: Unknown exception";
+        }
+
+        std::cout.rdbuf(old_buf);
+
+        results.push_back({
+            {"test_case_index", i},
+            {"actual_output", actual.is_string() ? actual.get<std::string>() : actual.dump()},
+            {"expected_output", tc["expected_output"].is_string() ? tc["expected_output"].get<std::string>() : tc["expected_output"].dump()},
+            {"stdout", ss.str()}
+        });
+    }
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    json final_output;
+    final_output["execution_time_ms"] = duration;
+    final_output["test_case_results"] = results;
+
+    std::ofstream out("/sandbox/run_results.json");
+    out << final_output.dump();
+    return 0;
+}
+"""
+
+        JAVA_DRIVER = r"""import java.io.*;
+import java.util.*;
+import org.json.simple.*;
+import org.json.simple.parser.*;
+
+{user_code}
+
+public class Main {
+    public static void main(String[] args) throws Exception {
+        JSONParser parser = new JSONParser();
+        JSONArray testcases = new JSONArray();
+        try {
+            testcases = (JSONArray) parser.parse(new FileReader("/sandbox/testcases.json"));
+        } catch (Exception e) {}
+
+        long start = System.currentTimeMillis();
+        Solution sol = new Solution();
+        JSONArray results = new JSONArray();
+
+        for (int i = 0; i < testcases.size(); i++) {
+            JSONObject tc = (JSONObject) testcases.get(i);
+            
+            PrintStream oldOut = System.out;
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            System.setOut(new PrintStream(baos));
+
+            Object actual = null;
+            try {
+                {call_logic}
+            } catch (Exception e) {
+                actual = "Runtime Error: " + e.getMessage();
+            }
+
+            System.setOut(oldOut);
+            JSONObject res = new JSONObject();
+            res.put("test_case_index", i);
+            
+            // Format actual output
+            String actualStr;
+            if (actual instanceof String && ((String)actual).startsWith("Runtime Error")) {
+                actualStr = (String)actual;
+            } else {
+                actualStr = JSONValue.toJSONString(actual);
+            }
+            
+            res.put("actual_output", actualStr);
+            res.put("expected_output", JSONValue.toJSONString(tc.get("expected_output")));
+            res.put("stdout", baos.toString());
+            results.add(res);
+        }
+
+        long end = System.currentTimeMillis();
+        JSONObject output = new JSONObject();
+        output.put("execution_time_ms", (int)(end - start));
+        output.put("test_case_results", results);
+
+        FileWriter fw = new FileWriter("/sandbox/run_results.json");
+        fw.write(output.toJSONString());
+        fw.flush();
+        fw.close();
+    }
+}
+"""
+
         # ── PROBLEM CONFIGS ───────────────────────────────────────────────
 
         configs = [
@@ -578,8 +700,12 @@ runTest();
                 "title": "Two Sum",
                 "py": "actual = sol.twoSum(tc['input']['nums'], tc['input']['target'])",
                 "js": "actual = sol.twoSum(tc.input.nums, tc.input.target);",
+                "cpp": "actual = sol.twoSum(tc[\"input\"][\"nums\"].get<std::vector<int>>(), tc[\"input\"][\"target\"].get<int>());",
+                "java": "actual = sol.twoSum((List<Long>)tc.get(\"input.nums\"), (int)tc.get(\"input.target\"));", // Simplified for now
                 "py_boiler": "class Solution:\n    def twoSum(self, nums: list[int], target: int) -> list[int]:\n        pass\n",
                 "js_boiler": "class Solution {\n    twoSum(nums, target) {\n    }\n}\n",
+                "cpp_boiler": "class Solution {\npublic:\n    std::vector<int> twoSum(std::vector<int>& nums, int target) {\n        \n    }\n};\n",
+                "java_boiler": "class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        \n    }\n}\n",
             },
             {
                 "title": "Reverse Linked List",
@@ -697,9 +823,25 @@ function flattenList(h){ let r=[];while(h){r.push(h.val);h=h.next;}return r; }
                 driver_code=js_code
             ))
 
-            # Note: C++ and Java drivers are omitted for brevity in this seed script 
-            # or could be added with a more complex JSON parsing approach.
-            # For now, we seed the most common languages.
+            # ── C++ Driver ──
+            cpp_code = CPP_DRIVER.replace("{user_code}", c.get("cpp_extra", "") + "\n{user_code}")
+            cpp_code = cpp_code.replace("{call_logic}", c.get("cpp", ""))
+            drivers.append(ProblemLanguageConfig(
+                problem_id=prob.id,
+                language=SupportedLanguage.CPP,
+                boilerplate=c.get("cpp_boiler", ""),
+                driver_code=cpp_code
+            ))
+
+            # ── Java Driver ──
+            java_code = JAVA_DRIVER.replace("{user_code}", c.get("java_extra", "") + "\n{user_code}")
+            java_code = java_code.replace("{call_logic}", c.get("java", ""))
+            drivers.append(ProblemLanguageConfig(
+                problem_id=prob.id,
+                language=SupportedLanguage.JAVA,
+                boilerplate=c.get("java_boiler", ""),
+                driver_code=java_code
+            ))
 
         # Clear existing configs
         for pd in problem_map.values():

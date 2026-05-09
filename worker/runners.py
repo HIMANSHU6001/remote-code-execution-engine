@@ -31,9 +31,9 @@ LANGUAGE_CONFIG: dict[str, RunnerConfig] = {
     ),
     Language.JAVA: RunnerConfig(
         source_file="Main.java",
-        compile_cmd="javac -d /sandbox /sandbox/Main.java",
+        compile_cmd="javac -cp /usr/share/java/json-simple.jar -d /sandbox /sandbox/Main.java",
         compile_artifact="Main.class",
-        run_cmd="java -cp /sandbox Main",
+        run_cmd="java -cp /sandbox:/usr/share/java/json-simple.jar Main",
     ),
     Language.PYTHON: RunnerConfig(
         source_file="solution.py",
