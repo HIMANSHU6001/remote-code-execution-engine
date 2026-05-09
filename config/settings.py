@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     S2S_JWT_AUDIENCE: str = "fastapi-social"
 
     # Frontend/CORS
-    ALLOWED_ORIGINS: str = "http://localhost:3000,https://codespace.himanshu6001.dev"
+    ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "https://codespace.himanshu6001.dev"]
 
     # Email verification
     VERIFICATION_TOKEN_TTL_SECONDS: int = 86_400
@@ -62,4 +62,4 @@ settings = get_settings()
 
 
 def get_allowed_origins() -> list[str]:
-    return [origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",") if origin.strip()]
+    return settings.ALLOWED_ORIGINS

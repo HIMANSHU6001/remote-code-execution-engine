@@ -149,6 +149,20 @@ mypy .
 
 ---
 
+## ⚙️ Environment Variables
+
+All variables are read via `config/settings.py` (Pydantic BaseSettings). See `.env.example` for the full list.
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `DATABASE_URL` | — | Async PostgreSQL DSN. |
+| `REDIS_URL` | `redis://localhost:6379/0` | Broker, pub/sub, rate-limit counters. |
+| `JWT_SECRET` | — | HS256 signing secret. |
+| `ALLOWED_ORIGINS` | `["http://localhost:3000"]` | JSON-encoded list of allowed origins. |
+| `SANDBOX_BASE_DIR`| `/sandbox/jobs` | Host path for sandbox jobs. |
+
+---
+
 ## 🔌 API Reference
 
 Full interactive documentation is available at `/docs` when the API is running.
