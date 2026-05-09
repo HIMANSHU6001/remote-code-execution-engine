@@ -36,13 +36,13 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    app.include_router(submit.router, tags=["submissions"])
-    app.include_router(submissions.router, tags=["submissions"])
-    app.include_router(problems.router, tags=["problems"], prefix="/problems")
-    app.include_router(topics.router, tags=["topics"], prefix="/topics")
+    app.include_router(submit.router, tags=["submissions"], prefix="/api")
+    app.include_router(submissions.router, tags=["submissions"], prefix="/api")
+    app.include_router(problems.router, tags=["problems"], prefix="/api/problems")
+    app.include_router(topics.router, tags=["topics"], prefix="/api/topics")
     app.include_router(auth.router, tags=["auth"], prefix="/api/auth")
-    app.include_router(ws_router, tags=["websocket"])
-    app.include_router(health.router, tags=["health"])
+    app.include_router(ws_router, tags=["websocket"], prefix="/api")
+    app.include_router(health.router, tags=["health"], prefix="/api")
 
     return app
 
