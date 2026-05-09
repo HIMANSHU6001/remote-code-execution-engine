@@ -11,7 +11,7 @@ from shared.models import TopicResponse
 router = APIRouter()
 
 
-@router.get("/", response_model=list[TopicResponse])
+@router.get("", response_model=list[TopicResponse])
 async def get_topics(db: Annotated[AsyncSession, Depends(get_db)]) -> list[TopicResponse]:
     """Get all topics ordered alphabetically."""
     result = await db.execute(select(Topic).order_by(Topic.name))
