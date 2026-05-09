@@ -1,17 +1,22 @@
-# /frontend/Dockerfile
-
 # Stage 1: Build the frontend
 FROM node:18-alpine AS builder
 WORKDIR /app
-COPY package*.json ./
+
+# Change these lines to point to the frontend directory
+COPY frontend/package*.json ./
 RUN npm ci
-COPY . .
-# The .env variables needed for the build (like API URLs) must be present here
+
+# Copy the rest of the frontend code
+COPY frontend/ ./
+
+# Run the build
 RUN npm run build
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
-# Copy the built assets (adjust 'dist' to 'build' or 'out' depending on your framework)
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Copy from builder stage
+COPY --from=builder /app/out /usr/share/nginx/html
+# Note: If you are using 'next build', the output is usually in 'out' (for static export) 
+# or '.next'. For Nginx, you want a static export.
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
