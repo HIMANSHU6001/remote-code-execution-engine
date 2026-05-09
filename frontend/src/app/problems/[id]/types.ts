@@ -11,8 +11,8 @@ export interface SubmissionCaseDetail {
   stdout?: string | null;
 }
 
-export interface SubmissionDetailResponseWithCases extends SubmissionDetailResponse {
+export type SubmissionDetailResponseWithCases = Omit<SubmissionDetailResponse, 'details'> & {
   details?: SubmissionCaseDetail[];
-}
+};
 
 export type LanguageConfigMap = Record<string, LanguageConfigResponse>;
