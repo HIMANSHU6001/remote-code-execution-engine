@@ -339,8 +339,8 @@ def evaluate_submission(self: Task, job_id: str) -> None:
             for res in tc_results:
                 idx = res["test_case_index"]
                 tc = test_cases[idx]
-                actual = res["actual_output"]
-                expected = res["expected_output"]
+                actual = res.get("actual_output")
+                expected = res.get("expected_output")
                 
                 if res["stdout"]:
                     user_logs_parts.append(res["stdout"])
@@ -380,8 +380,8 @@ def evaluate_submission(self: Task, job_id: str) -> None:
             for res in tc_results:
                 idx = res["test_case_index"]
                 tc = test_cases[idx]
-                actual = res["actual_output"]
-                expected = res["expected_output"]
+                actual = res.get("actual_output")
+                expected = res.get("expected_output")
                 stdout = res["stdout"]
                 
                 if stdout:

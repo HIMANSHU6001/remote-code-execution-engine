@@ -555,7 +555,7 @@ function runTest() {
         console.log = oldLog;
         results.push({
             test_case_index: i,
-            actual_output: JSON.stringify(actual),
+            actual_output: JSON.stringify(actual === undefined ? null : actual),
             expected_output: tc.expected_output,
             stdout: stdout
         });
