@@ -701,7 +701,7 @@ public class Main {
                 "py": "actual = sol.twoSum(tc['input']['nums'], tc['input']['target'])",
                 "js": "actual = sol.twoSum(tc.input.nums, tc.input.target);",
                 "cpp": "actual = sol.twoSum(tc[\"input\"][\"nums\"].get<std::vector<int>>(), tc[\"input\"][\"target\"].get<int>());",
-                "java": "actual = sol.twoSum((List<Long>)tc.get(\"input.nums\"), (int)tc.get(\"input.target\"));", // Simplified for now
+                "java": "actual = sol.twoSum((List<Long>)tc.get(\"input.nums\"), (int)tc.get(\"input.target\"));",
                 "py_boiler": "class Solution:\n    def twoSum(self, nums: list[int], target: int) -> list[int]:\n        pass\n",
                 "js_boiler": "class Solution {\n    twoSum(nums, target) {\n    }\n}\n",
                 "cpp_boiler": "class Solution {\npublic:\n    std::vector<int> twoSum(std::vector<int>& nums, int target) {\n        \n    }\n};\n",
@@ -736,66 +736,135 @@ class ListNode { constructor(v=0,n=null){this.val=v;this.next=n;} }
 function buildList(a){ if(!a||!a.length)return null;let h=new ListNode(a[0]),c=h;for(let i=1;i<a.length;i++){c.next=new ListNode(a[i]);c=c.next;}return h; }
 function flattenList(h){ let r=[];while(h){r.push(h.val);h=h.next;}return r; }
 """,
+                "cpp_extra": """
+struct ListNode {
+    int val;
+    ListNode *next;
+    ListNode() : val(0), next(nullptr) {}
+    ListNode(int x) : val(x), next(nullptr) {}
+    ListNode(int x, ListNode *next) : val(x), next(next) {}
+};
+
+ListNode* buildList(std::vector<int> a) {
+    if (a.empty()) return nullptr;
+    ListNode* h = new ListNode(a[0]), *c = h;
+    for (size_t i = 1; i < a.size(); i++) {
+        c->next = new ListNode(a[i]);
+        c = c->next;
+    }
+    return h;
+}
+
+std::vector<int> flattenList(ListNode* h) {
+    std::vector<int> r;
+    while (h) { r.push_back(h->val); h = h->next; }
+    return r;
+}
+""",
+                "java_extra": """
+class ListNode {
+    int val; ListNode next;
+    ListNode() {}
+    ListNode(int val) { this.val = val; }
+    ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+}
+""",
                 "py": "actual = flatten_list(sol.reverseList(build_list(tc['input'])))",
                 "js": "actual = flattenList(sol.reverseList(buildList(tc.input)));",
+                "cpp": "actual = flattenList(sol.reverseList(buildList(tc[\"input\"].get<std::vector<int>>())));",
+                "java": "actual = \"[Reverse Linked List java logic simplified]\";",
                 "py_boiler": "class Solution:\n    def reverseList(self, head):\n        pass\n",
                 "js_boiler": "class Solution {\n    reverseList(head) {\n    }\n}\n",
+                "cpp_boiler": "/**\n * Definition for singly-linked list.\n * struct ListNode {\n *     int val;\n *     ListNode *next;\n *     ListNode() : val(0), next(nullptr) {}\n *     ListNode(int x) : val(x), next(nullptr) {}\n *     ListNode(int x, ListNode *next) : val(x), next(next) {}\n * };\n */\nclass Solution {\npublic:\n    ListNode* reverseList(ListNode* head) {\n        \n    }\n};\n",
+                "java_boiler": "/**\n * Definition for singly-linked list.\n * public class ListNode {\n *     int val;\n *     ListNode next;\n *     ListNode() {}\n *     ListNode(int val) { this.val = val; }\n *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }\n * }\n */\nclass Solution {\n    public ListNode reverseList(ListNode head) {\n        \n    }\n}\n",
             },
             {
                 "title": "Valid Parentheses",
                 "py": "actual = sol.isValid(tc['input']['s'])",
                 "js": "actual = sol.isValid(tc.input.s);",
+                "cpp": "actual = sol.isValid(tc[\"input\"][\"s\"].get<std::string>());",
+                "java": "actual = sol.isValid((String)tc.get(\"input.s\"));",
                 "py_boiler": "class Solution:\n    def isValid(self, s: str) -> bool:\n        pass\n",
                 "js_boiler": "class Solution {\n    isValid(s) {\n    }\n}\n",
+                "cpp_boiler": "class Solution {\npublic:\n    bool isValid(string s) {\n        \n    }\n};\n",
+                "java_boiler": "class Solution {\n    public boolean isValid(String s) {\n        \n    }\n}\n",
             },
             {
                 "title": "Binary Search",
                 "py": "actual = sol.search(tc['input']['nums'], tc['input']['target'])",
                 "js": "actual = sol.search(tc.input.nums, tc.input.target);",
+                "cpp": "actual = sol.search(tc[\"input\"][\"nums\"].get<std::vector<int>>(), tc[\"input\"][\"target\"].get<int>());",
+                "java": "actual = sol.search((List<Long>)tc.get(\"input.nums\"), (int)tc.get(\"input.target\"));",
                 "py_boiler": "class Solution:\n    def search(self, nums: list[int], target: int) -> int:\n        pass\n",
                 "js_boiler": "class Solution {\n    search(nums, target) {\n    }\n}\n",
+                "cpp_boiler": "class Solution {\npublic:\n    int search(vector<int>& nums, int target) {\n        \n    }\n};\n",
+                "java_boiler": "class Solution {\n    public int search(int[] nums, int target) {\n        \n    }\n}\n",
             },
             {
                 "title": "Maximum Subarray",
                 "py": "actual = sol.maxSubArray(tc['input']['nums'])",
                 "js": "actual = sol.maxSubArray(tc.input.nums);",
+                "cpp": "actual = sol.maxSubArray(tc[\"input\"][\"nums\"].get<std::vector<int>>());",
+                "java": "actual = sol.maxSubArray((List<Long>)tc.get(\"input.nums\"));",
                 "py_boiler": "class Solution:\n    def maxSubArray(self, nums: list[int]) -> int:\n        pass\n",
                 "js_boiler": "class Solution {\n    maxSubArray(nums) {\n    }\n}\n",
+                "cpp_boiler": "class Solution {\npublic:\n    int maxSubArray(vector<int>& nums) {\n        \n    }\n};\n",
+                "java_boiler": "class Solution {\n    public int maxSubArray(int[] nums) {\n        \n    }\n}\n",
             },
             {
                 "title": "Longest Substring Without Repeating Characters",
                 "py": "actual = sol.lengthOfLongestSubstring(tc['input']['s'])",
                 "js": "actual = sol.lengthOfLongestSubstring(tc.input.s);",
+                "cpp": "actual = sol.lengthOfLongestSubstring(tc[\"input\"][\"s\"].get<std::string>());",
+                "java": "actual = sol.lengthOfLongestSubstring((String)tc.get(\"input.s\"));",
                 "py_boiler": "class Solution:\n    def lengthOfLongestSubstring(self, s: str) -> int:\n        pass\n",
                 "js_boiler": "class Solution {\n    lengthOfLongestSubstring(s) {\n    }\n}\n",
+                "cpp_boiler": "class Solution {\npublic:\n    int lengthOfLongestSubstring(string s) {\n        \n    }\n};\n",
+                "java_boiler": "class Solution {\n    public int lengthOfLongestSubstring(String s) {\n        \n    }\n}\n",
             },
             {
                 "title": "3Sum",
                 "py": "res = sol.threeSum(tc['input']['nums'])\n            actual = sorted([sorted(t) for t in res])",
                 "js": "let res = sol.threeSum(tc.input.nums);\n            actual = res.map(t=>[...t].sort((a,b)=>a-b)).sort((a,b)=>a[0]-b[0]||a[1]-b[1]||a[2]-b[2]);",
+                "cpp": "auto res = sol.threeSum(tc[\"input\"][\"nums\"].get<std::vector<int>>());\n            for(auto& t : res) std::sort(t.begin(), t.end());\n            std::sort(res.begin(), res.end());\n            actual = res;",
+                "java": "actual = \"[3Sum java logic simplified]\";",
                 "py_boiler": "class Solution:\n    def threeSum(self, nums: list[int]) -> list[list[int]]:\n        pass\n",
                 "js_boiler": "class Solution {\n    threeSum(nums) {\n    }\n}\n",
+                "cpp_boiler": "class Solution {\npublic:\n    vector<vector<int>> threeSum(vector<int>& nums) {\n        \n    }\n};\n",
+                "java_boiler": "class Solution {\n    public List<List<Integer>> threeSum(int[] nums) {\n        \n    }\n}\n",
             },
             {
                 "title": "Coin Change",
                 "py": "actual = sol.coinChange(tc['input']['coins'], tc['input']['amount'])",
                 "js": "actual = sol.coinChange(tc.input.coins, tc.input.amount);",
+                "cpp": "actual = sol.coinChange(tc[\"input\"][\"coins\"].get<std::vector<int>>(), tc[\"input\"][\"amount\"].get<int>());",
+                "java": "actual = sol.coinChange((List<Long>)tc.get(\"input.coins\"), (int)tc.get(\"input.amount\"));",
                 "py_boiler": "class Solution:\n    def coinChange(self, coins: list[int], amount: int) -> int:\n        pass\n",
                 "js_boiler": "class Solution {\n    coinChange(coins, amount) {\n    }\n}\n",
+                "cpp_boiler": "class Solution {\npublic:\n    int coinChange(vector<int>& coins, int amount) {\n        \n    }\n};\n",
+                "java_boiler": "class Solution {\n    public int coinChange(int[] coins, int amount) {\n        \n    }\n}\n",
             },
             {
                 "title": "Trapping Rain Water",
                 "py": "actual = sol.trap(tc['input']['height'])",
                 "js": "actual = sol.trap(tc.input.height);",
+                "cpp": "actual = sol.trap(tc[\"input\"][\"height\"].get<std::vector<int>>());",
+                "java": "actual = sol.trap((List<Long>)tc.get(\"input.height\"));",
                 "py_boiler": "class Solution:\n    def trap(self, height: list[int]) -> int:\n        pass\n",
                 "js_boiler": "class Solution {\n    trap(height) {\n    }\n}\n",
+                "cpp_boiler": "class Solution {\npublic:\n    int trap(vector<int>& height) {\n        \n    }\n};\n",
+                "java_boiler": "class Solution {\n    public int trap(int[] height) {\n        \n    }\n}\n",
             },
             {
                 "title": "Median of Two Sorted Arrays",
                 "py": "res = sol.findMedianSortedArrays(tc['input']['nums1'], tc['input']['nums2'])\n            actual = round(float(res), 5)",
                 "js": "let res = sol.findMedianSortedArrays(tc.input.nums1, tc.input.nums2);\n            actual = Math.round(res * 100000) / 100000;",
+                "cpp": "double res = sol.findMedianSortedArrays(tc[\"input\"][\"nums1\"].get<std::vector<int>>(), tc[\"input\"][\"nums2\"].get<std::vector<int>>());\n            actual = std::round(res * 100000.0) / 100000.0;",
+                "java": "actual = \"[Median java logic simplified]\";",
                 "py_boiler": "class Solution:\n    def findMedianSortedArrays(self, nums1: list[int], nums2: list[int]) -> float:\n        pass\n",
                 "js_boiler": "class Solution {\n    findMedianSortedArrays(nums1, nums2) {\n    }\n}\n",
+                "cpp_boiler": "class Solution {\npublic:\n    double findMedianSortedArrays(vector<int>& nums1, vector<int>& nums2) {\n        \n    }\n};\n",
+                "java_boiler": "class Solution {\n    public double findMedianSortedArrays(int[] nums1, int[] nums2) {\n        \n    }\n}\n",
             },
         ]
 
