@@ -1,445 +1,202 @@
-# RCE & Online Judge
+# 🚀 Remote Code Execution Engine & Online Judge
 
-A highly secure, asynchronous Remote Code Execution engine and Online Judge platform.
+A highly secure, asynchronous Remote Code Execution (RCE) engine and Online Judge platform, built for performance, isolation, and developer experience.
 
-Submissions are sandboxed inside rootless Docker containers with seccomp allowlists, no network, read-only filesystems, and strict CPU/memory/PID limits.
-
----
-
-## Table of Contents
-
-1. [Architecture](#architecture)
-2. [Tech Stack](#tech-stack)
-3. [Project Structure](#project-structure)
-4. [Prerequisites](#prerequisites)
-5. [Local Development Setup](#local-development-setup)
-6. [Running the Services](#running-the-services)
-7. [Environment Variables](#environment-variables)
-8. [API Reference](#api-reference)
-9. [Fern Documentation and SDKs](#fern-documentation-and-sdks)
-10. [Database ERD Generation](#database-erd-generation)
-11. [Quick Test with curl](#quick-test-with-curl)
-12. [Adding a New Language](#adding-a-new-language)
-13. [Code Style](#code-style)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.111%2B-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Docker](https://img.shields.io/badge/Docker-Sandboxed-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Celery](https://img.shields.io/badge/Celery-Async-37814A?logo=celery&logoColor=white)](https://docs.celeryq.dev/)
+[![Redis](https://img.shields.io/badge/Redis-Cache-DC382D?logo=redis&logoColor=white)](https://redis.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-DB-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-Frontend-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
 
 ---
 
-## Architecture
+## 📖 Overview
+
+This platform provides a robust environment for executing user-submitted code across multiple languages. It features a fully decoupled architecture using **FastAPI** for the gateway, **Celery** for background processing, and **rootless Docker** for secure sandboxing.
+
+### Key Features
+- **🔒 Secure Sandboxing**: Submissions run in rootless Docker containers with `seccomp` allowlists, read-only filesystems, and zero network access.
+- **⚡ Asynchronous Processing**: Scalable task queue management using Celery and Redis.
+- **🛰️ Real-time Updates**: WebSocket integration for instant submission results.
+- **📊 Comprehensive Monitoring**: Liveness/readiness checks and persistent submission logs.
+- **🌍 Multi-language Support**: Python, C++, Java, and Node.js out of the box.
+- **🛡️ Rate Limiting**: Token bucket and sliding window limiters to prevent abuse.
+
+---
+
+## 🏗️ Architecture
+
+The platform is designed to be highly scalable and resilient. Below is the high-level flow of a code submission:
+
+```mermaid
+graph TD
+    Client[Client/Frontend] -- POST /submit --> API[FastAPI Gateway]
+    API -- Enqueue Job --> RedisBroker[Redis Broker]
+    RedisBroker -- Dequeue --> Worker[Celery Worker]
+    Worker -- Execute --> Sandbox[Docker Sandbox]
+    Sandbox -- Result --> Worker
+    Worker -- Save --> DB[(PostgreSQL)]
+    Worker -- Publish Result --> RedisPubSub[Redis Pub/Sub]
+    RedisPubSub -- Real-time Update --> API
+    API -- WebSocket Result --> Client
+```
 
 | Component | Technology | Role |
 | --- | --- | --- |
-| API Gateway | FastAPI | HTTP endpoints, WebSocket hub, rate limiting, auth |
-| Message Broker | Redis DB 0 | Celery task queue, Pub/Sub result delivery, rate-limit counters |
-| Result Backend | Redis DB 1 | Celery result backend |
-| Worker | Celery + Celery Beat | Background code evaluation; periodic zombie/sandbox sweeper |
-| Database | PostgreSQL | Persistent storage — problems, test cases, submissions |
-| Sandbox | Docker (rootless) | Isolated, resource-capped code execution |
+| **API Gateway** | FastAPI | HTTP endpoints, WebSocket hub, rate limiting, and authentication. |
+| **Message Broker**| Redis (DB 0) | Task queueing and Pub/Sub delivery. |
+| **Result Backend**| Redis (DB 1) | Storage for Celery task results. |
+| **Worker Engine** | Celery + Beat | Background evaluation and periodic maintenance (zombie cleanup). |
+| **Primary DB**    | PostgreSQL | Persistent storage for problems, test cases, and submissions. |
+| **Sandbox**       | Docker | Rootless containers with strict CPU/Memory/PID limits. |
 
 ---
 
-## Tech Stack
+## 📂 Project Structure
 
-- **Python 3.10+** throughout
-- **FastAPI** — async HTTP + WebSocket
-- **SQLAlchemy 2.x** — async ORM for FastAPI, sync session for Celery
-- **Alembic** — database migrations
-- **Celery 5** + **Celery Beat** — task queue and periodic tasks
-- **Redis** — broker, result backend, pub/sub, rate-limit counters
-- **PostgreSQL 16** — primary datastore
-- **Docker (rootless)** — sandbox execution
-- **Pydantic v2** — request/response validation and settings
-- **PyJWT** — HS256 JWT authentication
-
----
-
-## Prerequisites
-
-| Tool | Minimum Version | Notes |
-| --- | --- | --- |
-| Python | 3.10 | Use pyenv or system Python |
-| Docker | 24.x | Rootless mode required for the worker in production; standard mode fine for local dev |
-| PostgreSQL | 16 | Provided via docker-compose |
-| Redis | 7 | Provided via docker-compose |
+```text
+.
+├── api/                # FastAPI application logic and routes
+├── auth/               # Authentication handlers and JWT dependencies
+├── config/             # Pydantic settings and environment management
+├── db/                 # Database models, migrations, and session management
+├── docker/             # Dockerfiles for sandbox environments (cpp, java, etc.)
+├── docs/               # System design diagrams and ERDs
+├── frontend/           # Next.js web interface
+├── infra/              # Infrastructure configs (seccomp, etc.)
+├── rate_limit/         # Rate limiting implementations (Token Bucket, Sliding Window)
+├── scripts/            # Utility scripts (OpenAPI gen, DB seeding, migrations)
+├── shared/             # Shared enums and Pydantic models
+├── worker/             # Celery worker logic and sandbox orchestration
+├── docker-compose.yml  # Full-stack orchestration
+└── pyproject.toml      # Backend dependencies and project metadata
+```
 
 ---
 
-## Local Development Setup
+## 🚀 Getting Started
 
-### 1. Clone and create a virtual environment
+### Prerequisites
+- **Python**: 3.10+
+- **Node.js**: 20+ (for frontend)
+- **Docker**: 24.x+ (Rootless mode recommended for production)
+- **PostgreSQL & Redis**: (Provided via Docker Compose)
 
+### 1. Backend Setup
 ```bash
+# Clone the repository
 git clone <repo-url>
 cd remote-code-execution-engine
 
+# Create virtual environment
 python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-```
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
-### 2. Install dependencies
-
-```bash
+# Install dependencies
 pip install -e ".[dev]"
-```
 
-### 3. Configure environment
-
-```bash
+# Configure environment
 cp .env.example .env
+# Update .env with your secrets (DATABASE_URL, JWT_SECRET, etc.)
 ```
 
-Open `.env` and set at minimum:
-
-```dotenv
-DATABASE_URL=postgresql+asyncpg://rce:rce_secret@localhost:5432/rce
-SYNC_DATABASE_URL=postgresql+psycopg2://rce:rce_secret@localhost:5432/rce
-REDIS_URL=redis://localhost:6379/0
-REDIS_RESULT_URL=redis://localhost:6379/1
-JWT_SECRET=<generate with: python -c "import secrets; print(secrets.token_hex(32))">
-```
-
-### 4. Start infrastructure (PostgreSQL + Redis)
-
+### 2. Frontend Setup
 ```bash
-docker-compose up -d postgres redis
+cd frontend
+npm install
+cp .env.example .env
+# Update .env with NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-Wait for both to be healthy:
-
+### 3. Running with Docker (Quick Start)
 ```bash
-docker-compose ps
-```
-
-### 5. Run database migrations
-
-```bash
-bash scripts/migrate.sh
-# or directly: python -m alembic upgrade head
-```
-
-### 6. Build sandbox Docker images
-
-```bash
+# Build sandbox images
 bash scripts/build_images.sh
-```
 
-This builds `rce-cpp`, `rce-java`, `rce-python`, and `rce-js` images locally. Required before the worker can execute any submission.
-
----
-
-## Running the Services
-
-You need three processes running simultaneously. Open a terminal for each.
-
-### API server
-
-```bash
-uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### Celery worker
-
-```bash
-celery -A worker.app worker --loglevel=info --concurrency=4
-```
-
-### Celery Beat (periodic tasks)
-
-```bash
-celery -A worker.app beat --loglevel=info
-```
-
-Beat runs two periodic tasks:
-
-- `sweep_zombies` — every 60 s: marks stuck `running` submissions as `IE`
-- `sweep_sandbox_dirs` — every 10 min: removes stale `/sandbox/jobs/*` directories
-
-### Or run everything via docker-compose
-
-```bash
+# Start everything
 docker-compose up --build
 ```
 
-> Note: The `worker` service in docker-compose needs access to the Docker socket and the sandbox volume. Review `docker-compose.yml` and adjust the socket path to match your system before using this in production.
+---
 
-### Production Docker images
+## 🛠️ Development Workflow
 
-Use dedicated production Dockerfiles to avoid dev dependencies and reload mode:
-
+### Database Migrations
 ```bash
-docker build -f Dockerfile.api.prod -t rce-api:prod .
-docker build -f Dockerfile.worker.prod -t rce-worker:prod .
+# Run migrations
+bash scripts/migrate.sh
+# or
+python -m alembic upgrade head
 ```
 
-`Dockerfile.api` and `Dockerfile.worker` remain optimized for local development.
-
----
-
-## Environment Variables
-
-All variables are read via `config/settings.py` (Pydantic BaseSettings). See `.env.example` for the full list.
-
-| Variable | Default | Description |
-| --- | --- | --- |
-| `DATABASE_URL` | — | Async PostgreSQL DSN (`postgresql+asyncpg://...`) |
-| `SYNC_DATABASE_URL` | — | Sync PostgreSQL DSN (`postgresql+psycopg2://...`) |
-| `REDIS_URL` | `redis://localhost:6379/0` | Broker, pub/sub, rate-limit counters |
-| `REDIS_RESULT_URL` | `redis://localhost:6379/1` | Celery result backend |
-| `JWT_SECRET` | — | HS256 signing secret — **generate a strong random value** |
-| `JWT_ALGORITHM` | `HS256` | JWT algorithm |
-| `SANDBOX_BASE_DIR` | `/sandbox/jobs` | Host path for per-job sandbox directories |
-| `WS_TIMEOUT_SEC` | `90` | WebSocket connection timeout |
-| `PING_INTERVAL_SEC` | `20` | WebSocket ping interval |
-| `TOKEN_BUCKET_CAPACITY` | `1.0` | Rate limit burst capacity |
-| `TOKEN_BUCKET_REFILL_RATE` | `0.5` | Tokens refilled per second (= 1 req / 2 s) |
-| `SLIDING_WINDOW_MAX` | `10` | Max submissions per window |
-| `SLIDING_WINDOW_SEC` | `60` | Sliding window duration in seconds |
-| `STDOUT_CAP_BYTES` | `102400` | Max stdout captured per test case (100 KB) |
-| `STDERR_CAP_BYTES` | `4096` | Max stderr captured per test case (4 KB) |
-| `COMPILE_ERR_CAP_BYTES` | `4096` | Max compile error captured (4 KB) |
-
----
-
-## API Reference
-
-Most endpoints require a JWT Bearer token: `Authorization: Bearer <token>`.
-
-Public auth endpoints:
-
-- `POST /api/auth/signup`
-- `GET /api/auth/verify?token=...`
-- `POST /api/auth/login`
-
-Service-auth endpoint (requires S2S Bearer token):
-
-- `POST /api/auth/social`
-
-Health endpoints:
-
-- `GET /health` and `GET /health/live` (liveness)
-- `GET /health/ready` (readiness: DB + Redis checks)
-
-### `POST /submit`
-
-Submit code for evaluation.
-
-**Request body:**
-
-```json
-{
-  "problem_id": "uuid",
-  "language": "python | cpp | java | nodejs",
-  "code": "print('hello')"
-}
-```
-
-**Response `202`:**
-
-```json
-{ "job_id": "uuid" }
-```
-
-**Error codes:** `401` unauthorized · `404` problem not found · `422` validation error · `429` rate limited
-
----
-
-### `GET /submissions/{job_id}`
-
-Poll submission status. Returns `status: "running"` with null verdict fields while in progress.
-
-**Response `200`:**
-
-```json
-{
-  "job_id": "uuid",
-  "status": "pending | running | completed",
-  "verdict": "ACC | WA | TLE | MLE | RE | CE | IE | null",
-  "execution_time_ms": 123,
-  "memory_used_mb": 32.0,
-  "stdout_snippet": "...",
-  "stderr_snippet": "..."
-}
-```
-
-**Error codes:** `403` (other user's submission) · `404` not found
-
----
-
-### `WS /ws/{job_id}?token=<jwt>`
-
-Real-time result delivery. The JWT is passed as a query parameter (browser WebSocket limitation).
-
-**Message sequence:**
-
-```text
-server → { "type": "ack",    "job_id": "..." }
-server → { "type": "ping" }                        # every 20 s
-server → { "type": "result", "job_id": "...", "verdict": "ACC", ... }
-         (connection closes after result is sent)
-```
-
-Connection times out after 90 s. Recover by polling `GET /submissions/{job_id}`.
-
----
-
-### `GET /problems/{problem_id}`
-
-Fetch problem details and **sample** test cases. Hidden test cases are never returned.
-
-**Response `200`:**
-
-```json
-{
-  "id": "uuid",
-  "title": "Two Sum",
-  "base_time_limit_ms": 1000,
-  "base_memory_limit_mb": 256,
-  "sample_test_cases": [
-    { "id": "uuid", "input_data": "2\n1 2", "expected_output": "3", "is_sample": true }
-  ]
-}
-```
-
----
-
-## Fern Documentation and SDKs
-
-Fern is configured in the `fern/` directory and uses `fern/openapi.yml` as the API contract.
-
-Hosted docs endpoint:
-
-- https://rce-docs.docs.buildwithfern.com
-
-### Install Fern CLI
-
+### Generating OpenAPI Schema
 ```bash
-npm install -g fern-api
+# Generate the latest openapi.json
+python scripts/generate_openapi.py
 ```
 
-### Validate Fern configuration
-
+### Running Tests & Linting
 ```bash
-cd fern
-fern check
-```
-
-### Generate SDKs locally
-
-```bash
-cd fern
-fern generate --group local
-```
-
-Generated SDK outputs:
-
-- `sdks/typescript`
-
-### Notes
-
-- HTTP endpoints are modeled in OpenAPI and used by Fern for SDK generation.
-- WebSocket behavior (`WS /ws/{job_id}`) is intentionally documented in markdown/API reference prose and not modeled as an OpenAPI path.
-
----
-
-## Database ERD Generation
-
-Generate the latest ERD from SQLAlchemy models and overwrite the SVG:
-
-```bash
-uv run generate-erd
-```
-
-Outputs:
-
-- `docs/db-erd.mmd`
-- `docs/ERD.svg`
-
-Equivalent direct script command:
-
-```bash
-python scripts/generate_erd_svg.py
-```
-
----
-
-## Quick Test with curl
-
-```bash
-# 1. Generate a test JWT (adjust JWT_SECRET to match your .env)
-TOKEN=$(python -c "
-import jwt, datetime
-print(jwt.encode(
-    {'sub': 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', 'role': 'user',
-     'iat': datetime.datetime.utcnow(),
-     'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)},
-    'YOUR_JWT_SECRET', algorithm='HS256'
-))
-")
-
-# 2. Submit code
-curl -s -X POST http://localhost:8000/submit \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"problem_id":"<uuid>","language":"python","code":"print(input())"}' | jq .
-
-# 3. Poll result
-curl -s http://localhost:8000/submissions/<job_id> \
-  -H "Authorization: Bearer $TOKEN" | jq .
-```
-
----
-
-## Verdict Reference
-
-| Verdict | Meaning |
-| --- | --- |
-| `ACC` | Accepted — all test cases passed |
-| `WA` | Wrong Answer |
-| `TLE` | Time Limit Exceeded (GNU `timeout` exit code 124) |
-| `MLE` | Memory Limit Exceeded (OOM kill) |
-| `RE` | Runtime Error (non-zero exit, not TLE) |
-| `CE` | Compilation Error (compiled artifact not produced) |
-| `IE` | Internal Error (unhandled worker exception or zombie timeout) |
-
----
-
-## Adding a New Language
-
-1. **Create a Dockerfile** in `docker/<lang>/Dockerfile`. Follow the existing pattern: `debian:bookworm-slim` base, install runtime + `coreutils` (for GNU `timeout`), create `runner` user UID `10001`.
-
-2. **Register the runner config** in `worker/runners.py`:
-
-   ```python
-   Language.YOURLANG: RunnerConfig(
-       source_file="solution.ext",
-       compile_cmd=None,          # or a compile command
-       compile_artifact=None,     # or expected output filename
-       run_cmd="your-runtime /sandbox/solution.ext",
-   ),
-   ```
-
-3. **Add the enum value** to `shared/enums.py` → `Language`.
-
-4. **Add a DB migration** for the new enum value in `language_enum` in PostgreSQL.
-
-5. **Build the image:**
-
-   ```bash
-   docker build -t rce-yourlang:latest docker/yourlang/
-   ```
-
-6. **Add fairness multipliers** in `worker/fairness.py` → `_MULTIPLIERS`.
-
----
-
-## Code Style
-
-```bash
-# Lint + format
+# Linting & Formatting
 ruff check .
 ruff format .
 
-# Type checking
+# Type Checking
 mypy .
 ```
 
-All code targets **Python 3.10+**, uses strict type hints, and follows Google-style docstrings. Import order is enforced by ruff (`I` rule set).
+---
+
+## 🔌 API Reference
+
+Full interactive documentation is available at `/docs` when the API is running.
+
+- **`POST /submit`**: Submit code for evaluation.
+- **`GET /submissions/{job_id}`**: Poll submission status.
+- **`WS /ws/{job_id}`**: Real-time result streaming via WebSockets.
+- **`GET /problems`**: List available challenges.
+
+For Fern-generated documentation and SDKs, visit: [rce-docs.buildwithfern.com](https://rce-docs.docs.buildwithfern.com)
+
+---
+
+## 🚦 Verdict Reference
+
+| Verdict | Meaning |
+| --- | --- |
+| `ACC` | Accepted — all test cases passed. |
+| `WA` | Wrong Answer — output mismatch. |
+| `TLE` | Time Limit Exceeded. |
+| `MLE` | Memory Limit Exceeded. |
+| `RE` | Runtime Error — non-zero exit code. |
+| `CE` | Compilation Error — failed to build artifact. |
+| `IE` | Internal Error — sandbox or worker failure. |
+
+---
+
+## ➕ Adding a New Language
+
+1. **Create Dockerfile**: Add `docker/<lang>/Dockerfile` following the standard pattern.
+2. **Register Runner**: Update `worker/runners.py` with the language's compile and run commands.
+3. **Update Enum**: Add the new language to `shared/enums.py`.
+4. **DB Migration**: Create an Alembic migration to update the `language_enum` in PostgreSQL.
+5. **Fairness Multipliers**: (Optional) Add time/memory multipliers in `worker/fairness.py`.
+
+---
+
+## 🔒 Security & Isolation
+
+The engine employs multiple layers of security to prevent malicious code from impacting the host:
+- **Rootless Docker**: The worker and sandbox containers do not have root privileges on the host.
+- **Seccomp**: A strict system call filter restricts the capabilities of the running code.
+- **Networking**: All sandbox containers are disconnected from any network.
+- **Resource Limits**: Hard caps on memory (e.g., 256MB), CPU shares, and number of processes (PIDs).
+- **Filesystem**: The sandbox environment is mounted as read-only, except for a temporary working directory.
+
+---
+
+## ⚖️ License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

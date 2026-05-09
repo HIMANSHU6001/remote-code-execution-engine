@@ -26,11 +26,11 @@ class Settings(BaseSettings):
     S2S_JWT_AUDIENCE: str = "fastapi-social"
 
     # Frontend/CORS
-    ALLOWED_ORIGINS: str = "http://localhost:3000"
+    ALLOWED_ORIGINS: str = "http://localhost:3000,https://codespace.himanshu6001.dev"
 
     # Email verification
     VERIFICATION_TOKEN_TTL_SECONDS: int = 86_400
-    VERIFY_EMAIL_BASE_URL: str = "http://localhost:3000/verify-email"
+    VERIFY_EMAIL_BASE_URL: str = "https://codespace.himanshu6001.dev/verify-email"
     RESEND_API_KEY: str | None = None
     RESEND_FROM_EMAIL: str | None = None
 
