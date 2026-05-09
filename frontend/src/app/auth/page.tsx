@@ -4,9 +4,10 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Code2, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "react-hot-toast";
+import Image from "next/image";
 
 export default function AuthPage() {
   const [mode, setMode] = useState<"signin" | "register">("signin");
@@ -54,8 +55,14 @@ export default function AuthPage() {
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="flex flex-col items-center mb-8">
-            <div className="bg-emerald-600 p-3 rounded-2xl mb-4 shadow-lg shadow-emerald-600/20">
-              <Code2 className="h-8 w-8 text-black" />
+            <div className="mb-4 shadow-lg shadow-emerald-600/20 rounded-2xl overflow-hidden">
+              <Image
+                src="/codespace_logo.svg"
+                alt="CodeSpace Logo"
+                width={64}
+                height={64}
+                className="bg-[#0f0f0f]"
+              />
             </div>
             <h1 className="text-3xl font-bold text-white tracking-tight">CodeSpace</h1>
             <p className="text-zinc-500 mt-2 text-center">

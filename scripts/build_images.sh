@@ -13,7 +13,6 @@ build() {
 }
 
 build cpp    cpp
-build clang  clang
 build java   java
 build python python
 build nodejs nodejs

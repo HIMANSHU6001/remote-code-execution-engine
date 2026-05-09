@@ -14,6 +14,21 @@ import { auth, googleProvider, githubProvider } from "@/lib/firebase";
 import { signInWithPopup, type AuthProvider as FirebaseAuthProvider } from "firebase/auth";
 import { handleSocialAuthAction } from "@/app/actions/auth";
 
+client.setConfig({
+  baseUrl: process.env.NEXT_PUBLIC_API_URL,
+});
+
+if (typeof window !== "undefined") {
+  const savedToken = Cookies.get("auth_token");
+  if (savedToken) {
+    client.setConfig({
+      headers: {
+        Authorization: `Bearer ${savedToken}`,
+      },
+    });
+  }
+}
+
 interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;

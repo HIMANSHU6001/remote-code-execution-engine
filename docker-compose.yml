@@ -34,7 +34,7 @@ services:
   migrate:
     build:
       context: .
-      dockerfile: Dockerfile.api
+      dockerfile: Dockerfile.api.prod
     depends_on:
       postgres:
         condition: service_healthy
@@ -48,7 +48,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile.api
+      dockerfile: Dockerfile.api.prod
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -74,9 +74,6 @@ services:
       - "3000:3000"
     env_file:
       - ./frontend/.env
-    environment:
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-      - INTERNAL_API_URL=http://api:8000
     depends_on:
       - api
     volumes:
@@ -87,11 +84,10 @@ services:
   worker:
     build:
       context: .
-      dockerfile: Dockerfile.worker
+      dockerfile: Dockerfile.worker.prod
     restart: unless-stopped
     user: root
     environment:
-      # - DOCKER_HOST=tcp://host.docker.internal:2375
       - HOST_PROJECT_ROOT=${HOST_PROJECT_ROOT}
       - HOST_SANDBOX_ROOT=${HOST_SANDBOX_ROOT}
     depends_on:
@@ -113,7 +109,7 @@ services:
   beat:
     build:
       context: .
-      dockerfile: Dockerfile.worker
+      dockerfile: Dockerfile.worker.prod
     restart: unless-stopped
     depends_on:
       redis:

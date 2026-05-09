@@ -1,8 +1,6 @@
 import type { ProblemResponse, SubmissionDetailResponse, LanguageConfigResponse } from "@/lib/api-client";
 
-export interface ProblemWithDescription extends ProblemResponse {
-  description: string;
-}
+export type ProblemWithDescription = ProblemResponse;
 
 export interface SubmissionCaseDetail {
   test_case_id: string;

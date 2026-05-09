@@ -26,17 +26,6 @@ Submissions are sandboxed inside rootless Docker containers with seccomp allowli
 
 ## Architecture
 
-```text
-Client
-  │── POST /submit ─────────────────► FastAPI Gateway
-  │◄── 202 { job_id } ───────────────┤
-  │                                  │── enqueue ──► Redis (Celery queue)
-  │── WS /ws/{job_id}?token=<jwt> ──►│                      │
-  │◄── result (via pub/sub) ─────────│◄── publish ──────── Celery Worker
-                                     │                      │
-                                     └──── r/w ───► PostgreSQL + Docker (rootless)
-```
-
 | Component | Technology | Role |
 | --- | --- | --- |
 | API Gateway | FastAPI | HTTP endpoints, WebSocket hub, rate limiting, auth |
@@ -60,75 +49,6 @@ Client
 - **Docker (rootless)** — sandbox execution
 - **Pydantic v2** — request/response validation and settings
 - **PyJWT** — HS256 JWT authentication
-
----
-
-## Project Structure
-
-```text
-.
-├── api/                    # FastAPI process
-│   ├── main.py             # App factory and router mounts
-│   ├── routes/
-│   │   ├── submit.py       # POST /submit
-│   │   ├── submissions.py  # GET /submissions/{job_id}
-│   │   └── problems.py     # GET /problems/{problem_id}
-│   └── websocket.py        # WS /ws/{job_id}
-│
-├── auth/
-│   └── dependencies.py     # JWT decode FastAPI dependency
-│
-├── rate_limit/
-│   ├── __init__.py         # apply_rate_limits() — runs both limiters
-│   ├── token_bucket.py     # Burst: 1 req / 2 s (Lua, atomic)
-│   └── sliding_window.py   # Sustained: 10 req / 60 s (Lua, atomic)
-│
-├── db/
-│   ├── base.py             # Async SQLAlchemy engine (FastAPI)
-│   ├── sync_session.py     # Sync SQLAlchemy session (Celery)
-│   ├── models.py           # ORM table definitions
-│   ├── queries.py          # Async query helpers
-│   └── migrations/         # Alembic migrations
-│       └── versions/
-│           └── 0001_initial_schema.py
-│
-├── worker/                 # Celery process
-│   ├── app.py              # Celery app instance
-│   ├── celeryconfig.py     # Broker, backend, task settings
-│   ├── beat_schedule.py    # Periodic task schedule
-│   ├── tasks.py            # evaluate_submission, sweep_zombies, sweep_sandbox_dirs
-│   ├── sandbox.py          # Host sandbox directory management
-│   ├── compile.py          # Compilation container runner
-│   ├── execute.py          # Execution container orchestration
-│   ├── fairness.py         # Per-language time/memory multipliers
-│   └── runners.py          # Language config (source file, compile cmd, run cmd)
-│
-├── shared/
-│   ├── enums.py            # Language, SubmissionStatus, Verdict
-│   └── models.py           # Pydantic request/response models
-│
-├── config/
-│   └── settings.py         # Pydantic BaseSettings (reads from .env)
-│
-├── docker/                 # Sandbox language images
-│   ├── cpp/Dockerfile
-│   ├── clang/Dockerfile
-│   ├── java/Dockerfile
-│   ├── python/Dockerfile
-│   └── js/Dockerfile
-│
-├── infra/
-│   └── seccomp.json        # Seccomp allowlist (deploy to /etc/rce/seccomp.json on worker host)
-│
-├── scripts/
-│   ├── build_images.sh     # Build all rce-* Docker images
-│   └── migrate.sh          # Run alembic upgrade head
-│
-├── redis_client.py         # Shared async + sync Redis helpers
-├── alembic.ini
-├── docker-compose.yml      # Local dev: postgres + redis + api + worker + beat
-└── pyproject.toml
-```
 
 ---
 

@@ -109,6 +109,7 @@ async def post_problem(
     return ProblemResponse(
         id=problem.id,
         title=problem.title,
+        description=problem.description,
         difficulty=problem.difficulty,
         base_time_limit_ms=problem.base_time_limit_ms,
         base_memory_limit_mb=problem.base_memory_limit_mb,
@@ -150,6 +151,7 @@ async def get_problem(
     return ProblemResponse(
         id=problem.id,
         title=problem.title,
+        description=problem.description,
         difficulty=problem.difficulty,
         base_time_limit_ms=problem.base_time_limit_ms,
         base_memory_limit_mb=problem.base_memory_limit_mb,

@@ -4,9 +4,10 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Code2, LogOut, User, Menu, X } from "lucide-react";
+import { LogOut, User, Menu, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 const Navbar = () => {
   const { isAuthenticated, logout } = useAuth();
@@ -18,13 +19,17 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-zinc-800 bg-[#0f0f0f]/80 backdrop-blur-xl supports-[backdrop-filter]:bg-[#0f0f0f]/60">
+    <nav className="sticky top-0 z-50 w-full border-b border-zinc-800 bg-[#0f0f0f]/80 backdrop-blur-xl supports-backdrop-filter:bg-[#0f0f0f]/60">
       <div className="container mx-auto px-4 flex h-14 items-center justify-between">
         <div className="flex items-center gap-8">
           <Link href="/problems" className="flex items-center gap-2 group">
-            <div className="bg-emerald-600 p-1.5 rounded-lg group-hover:scale-110 transition-transform">
-              <Code2 className="h-5 w-5 text-black" />
-            </div>
+            <Image
+              src="/codespace_logo.svg"
+              alt="CodeSpace Logo"
+              width={32}
+              height={32}
+              className="group-hover:scale-110 transition-transform"
+            />
             <span className="font-bold text-lg tracking-tight text-white">CodeSpace</span>
           </Link>
 

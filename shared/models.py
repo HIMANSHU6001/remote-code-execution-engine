@@ -94,6 +94,7 @@ class ProblemResponse(BaseModel):
 
     id: uuid.UUID
     title: str
+    description: str
     difficulty: Difficulty
     base_time_limit_ms: int
     base_memory_limit_mb: int

@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import { Code2 } from "lucide-react";
+import Image from "next/image";
 
 const Editor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
@@ -29,7 +29,12 @@ export function EditorPanel({
     <div className="h-full flex flex-col bg-[#121212]">
       <div className="flex items-center justify-between px-4 h-10 border-b border-zinc-800 shrink-0 bg-[#1a1a1a]">
         <div className="flex items-center gap-2">
-          <Code2 className="h-4 w-4 text-emerald-500" />
+          <Image
+            src="/codespace_logo.svg"
+            alt="Logo"
+            width={16}
+            height={16}
+          />
           <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
             Editor
           </span>
