@@ -4,9 +4,9 @@ import React, { useEffect, useState } from "react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Loader2 } from "lucide-react";
 import {
-  getProblemProblemsProblemIdGet,
-  submitCodeSubmitPost,
-  getSubmissionStatusSubmissionsJobIdGet,
+  getProblemApiProblemsProblemIdGet as getProblemProblemsProblemIdGet,
+  submitCodeApiSubmitPost as submitCodeSubmitPost,
+  getSubmissionStatusApiSubmissionsJobIdGet as getSubmissionStatusSubmissionsJobIdGet,
   type SubmissionDetailResponse,
   type LanguageConfigResponse,
 } from "@/lib/api-client";
