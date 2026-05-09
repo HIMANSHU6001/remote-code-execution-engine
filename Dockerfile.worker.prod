@@ -33,6 +33,7 @@ RUN groupadd -g ${DOCKER_GID} docker_group || true \
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
+ENV PYTHONPATH=/app
 
 # Copy dependency files first
 COPY pyproject.toml uv.lock ./
