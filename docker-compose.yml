@@ -11,27 +11,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
       interval: 5s
       timeout: 5s
       retries: 10
-    env_file:
-      - .env
-  
-  # For local development, pgAdmin can be used to manage the PostgreSQL database. It will be accessible at http://localhost:5050
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    restart: unless-stopped
-    ports:
-      - "5050:80"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
-    depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - ./servers.json:/pgadmin4/servers.json:ro
     env_file:
       - .env
 
@@ -41,21 +24,10 @@ services:
     ports:
       - "6379:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 3s
       retries: 10
-    env_file:
-      - .env
-  
-  # For visualizing and managing Redis DB. Accessible at http://localhost:5540
-  redisinsight:
-    image: redis/redisinsight:latest
-    ports:
-      - "5540:5540"
-    depends_on:
-      redis:
-        condition: service_healthy
     env_file:
       - .env
 
@@ -100,23 +72,26 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+    env_file:
+      - ./frontend/.env
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - INTERNAL_API_URL=http://api:8000
     depends_on:
       - api
     volumes:
       - ./frontend:/app/frontend
       - /app/frontend/node_modules
-    env_file:
-      - .env
+      - /app/frontend/.next
 
   worker:
     build:
       context: .
       dockerfile: Dockerfile.worker
     restart: unless-stopped
+    user: root
     environment:
-      - DOCKER_HOST=tcp://host.docker.internal:2375
+      # - DOCKER_HOST=tcp://host.docker.internal:2375
       - HOST_PROJECT_ROOT=${HOST_PROJECT_ROOT}
       - HOST_SANDBOX_ROOT=${HOST_SANDBOX_ROOT}
     depends_on:

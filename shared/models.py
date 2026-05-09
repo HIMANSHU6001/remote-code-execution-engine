@@ -4,7 +4,7 @@ import uuid
 
 from pydantic import UUID4, BaseModel, ConfigDict, EmailStr, Field, field_validator
 
-from shared.enums import Difficulty, Language, SubmissionStatus, Verdict
+from shared.enums import Difficulty, Language, SubmissionStatus, SupportedLanguage, Verdict
 
 # ---------------------------------------------------------------------------
 # Inbound
@@ -46,6 +46,7 @@ class SubmissionDetailResponse(BaseModel):
     expected_output: str | None = None
     passed_test_cases: int = 0
     total_test_cases: int = 0
+    details: list[dict] | None = None
     failed_test_case_id: uuid.UUID | None = None
 
 
@@ -54,6 +55,14 @@ class ProblemSampleTestCase(BaseModel):
     input_data: str
     expected_output: str
     is_sample: bool
+
+
+class LanguageConfigResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    language: SupportedLanguage
+    boilerplate: str
+    driver_code: str
 
 
 class TopicResponse(BaseModel):
@@ -91,6 +100,7 @@ class ProblemResponse(BaseModel):
     hints: list[str] = []
     topics: list[TopicResponse] = []
     sample_test_cases: list[ProblemSampleTestCase]
+    language_configs: list[LanguageConfigResponse] = []
 
 
 class TestCaseCreateRequest(BaseModel):

@@ -15,9 +15,6 @@ const Navbar = () => {
 
   const navLinks = [
     { name: "Problems", href: "/problems" },
-    { name: "Contest", href: "/contest" },
-    { name: "Discuss", href: "/discuss" },
-    { name: "Leaderboard", href: "/leaderboard" },
   ];
 
   return (
@@ -54,9 +51,9 @@ const Navbar = () => {
               <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white rounded-full">
                 <User className="h-5 w-5" />
               </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={logout}
                 className="text-zinc-400 hover:text-red-400 gap-2 font-medium"
               >
@@ -80,7 +77,7 @@ const Navbar = () => {
           )}
 
           {/* Mobile Toggle */}
-          <button 
+          <button
             className="md:hidden text-zinc-400"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >

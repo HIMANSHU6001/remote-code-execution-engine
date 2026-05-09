@@ -72,6 +72,21 @@ async def get_problem_with_sample_cases(db: AsyncSession, problem_id: uuid.UUID)
     return result.unique().scalar_one_or_none()
 
 
+async def get_problem_with_sample_cases_and_language_configs(
+    db: AsyncSession, problem_id: uuid.UUID
+) -> Problem | None:
+    """Return problem + sample test cases + all language configs.
+
+    Used for problem detail endpoint to provide boilerplate for all languages.
+    """
+    result = await db.execute(
+        select(Problem)
+        .options(selectinload(Problem.test_cases), selectinload(Problem.language_configs))
+        .where(Problem.id == problem_id)
+    )
+    return result.unique().scalar_one_or_none()
+
+
 # ---------------------------------------------------------------------------
 # Submissions
 # ---------------------------------------------------------------------------

@@ -12,6 +12,7 @@ import {
 import { client } from "@/lib/api-client/client.gen";
 import { auth, googleProvider, githubProvider } from "@/lib/firebase";
 import { signInWithPopup, type AuthProvider as FirebaseAuthProvider } from "firebase/auth";
+import { handleSocialAuthAction } from "@/app/actions/auth";
 
 interface AuthContextType {
   token: string | null;
@@ -31,11 +32,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Configure base URL for the API client
-    client.setConfig({
-      baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
-    });
-
     const savedToken = Cookies.get("auth_token");
     if (savedToken) {
       setToken(savedToken);
@@ -77,17 +73,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!user.email) throw new Error("Email not found from social provider");
 
-      const response = await socialAuthApiAuthSocialPost({
-        body: {
-          email: user.email,
-          name: user.displayName || "",
-          provider: firebaseProvider.providerId,
-          provider_account_id: user.uid,
-        }
+      const response = await handleSocialAuthAction({
+        email: user.email,
+        name: user.displayName || "",
+        provider: firebaseProvider.providerId,
+        provider_account_id: user.uid,
       });
 
-      if (response.error) {
-        throw new Error("Social login failed on backend");
+      if (response.error || !response.data) {
+        throw new Error(response.error || "Social login failed on backend");
       }
 
       const token = response.data.access_token;

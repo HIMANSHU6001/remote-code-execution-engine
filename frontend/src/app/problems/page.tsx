@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
-import { 
-  listProblemsProblemsGet, 
+import { useSearchParams } from "next/navigation";
+import {
+  listProblemsProblemsGet,
   getTopicsTopicsGet,
   type ProblemListResponse,
   type TopicResponse,
@@ -11,11 +12,11 @@ import {
 } from "@/lib/api-client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { 
-  Search, 
-  ChevronRight, 
-  Filter, 
-  CheckCircle2, 
+import {
+  Search,
+  ChevronRight,
+  Filter,
+  CheckCircle2,
   Circle,
   Trophy,
   Zap,
@@ -24,6 +25,16 @@ import {
 import { cn } from "@/lib/utils";
 
 export default function ProblemsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProblemsContent />
+    </Suspense>
+  );
+}
+
+function ProblemsContent() {
+  const searchParams = useSearchParams();
+  const topicParam = searchParams.get("topic");
   const [problems, setProblems] = useState<ProblemListResponse[]>([]);
   const [topics, setTopics] = useState<TopicResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,14 +48,15 @@ export default function ProblemsPage() {
           listProblemsProblemsGet({
             query: {
               difficulty: difficultyFilter === "all" ? undefined : difficultyFilter,
+              topics: topicParam ? [topicParam] : undefined,
               size: 50
             }
           }),
           getTopicsTopicsGet()
         ]);
 
-        if (probsRes.data) setProblems(probsRes.data.items);
-        if (topicsRes.data) setTopics(topicsRes.data);
+        setProblems(probsRes.data?.items || []);
+        setTopics(topicsRes.data || []);
       } catch (err) {
         console.error("Failed to fetch problems", err);
       } finally {
@@ -52,7 +64,7 @@ export default function ProblemsPage() {
       }
     }
     fetchData();
-  }, [difficultyFilter]);
+  }, [difficultyFilter, topicParam]);
 
   const difficultyColors = {
     easy: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
@@ -60,7 +72,7 @@ export default function ProblemsPage() {
     hard: "text-rose-500 bg-rose-500/10 border-rose-500/20",
   };
 
-  const filteredProblems = problems.filter(p => 
+  const filteredProblems = (problems || []).filter(p =>
     p.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -70,7 +82,7 @@ export default function ProblemsPage() {
       <div className="mb-12">
         <h1 className="text-4xl font-bold text-white mb-4 tracking-tight">Pick Your Challenge</h1>
         <p className="text-zinc-500 text-lg max-w-2xl">
-          Sharpen your coding skills with our curated collection of problems. 
+          Sharpen your coding skills with our curated collection of problems.
           From algorithmic fundamentals to complex system designs.
         </p>
       </div>
@@ -90,8 +102,8 @@ export default function ProblemsPage() {
                   onClick={() => setDifficultyFilter(d as any)}
                   className={cn(
                     "flex items-center justify-between px-4 py-2.5 rounded-xl border transition-all text-sm font-medium",
-                    difficultyFilter === d 
-                      ? "bg-emerald-600/10 border-emerald-500/50 text-emerald-500" 
+                    difficultyFilter === d
+                      ? "bg-emerald-600/10 border-emerald-500/50 text-emerald-500"
                       : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-300"
                   )}
                 >
@@ -106,38 +118,27 @@ export default function ProblemsPage() {
             <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
               <Zap className="h-4 w-4" />
               Topics
+              {topicParam && (
+                <Link href="/problems" className="ml-auto text-[10px] text-emerald-500 hover:underline">
+                  Clear
+                </Link>
+              )}
             </h3>
             <div className="flex flex-wrap gap-2">
               {topics.map((t) => (
-                <button
+                <Link
                   key={t.id}
-                  className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs font-medium hover:border-zinc-700 hover:text-zinc-300 transition-all"
+                  href={`/problems?topic=${t.slug}`}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg border text-xs font-medium transition-all",
+                    topicParam === t.slug
+                      ? "bg-emerald-600/10 border-emerald-500/50 text-emerald-500"
+                      : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-300"
+                  )}
                 >
                   {t.name}
-                </button>
+                </Link>
               ))}
-            </div>
-          </div>
-          
-          {/* Stats Card */}
-          <div className="p-6 rounded-3xl bg-gradient-to-br from-zinc-900 to-black border border-zinc-800/50">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-10 w-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                <Trophy className="h-5 w-5 text-amber-500" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-zinc-500">Your Progress</p>
-                <p className="text-lg font-bold text-white">Advanced</p>
-              </div>
-            </div>
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-zinc-400">Solved</span>
-                <span className="text-white font-medium">124 / 500</span>
-              </div>
-              <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                <div className="w-[24.8%] h-full bg-emerald-500" />
-              </div>
             </div>
           </div>
         </div>
@@ -147,7 +148,7 @@ export default function ProblemsPage() {
           {/* Search Bar */}
           <div className="relative group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-600 group-focus-within:text-emerald-500 transition-colors" />
-            <Input 
+            <Input
               placeholder="Search problems by name or ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -166,15 +167,12 @@ export default function ProblemsPage() {
             ) : filteredProblems.length > 0 ? (
               <div className="divide-y divide-zinc-800/50">
                 {filteredProblems.map((problem) => (
-                  <Link 
+                  <Link
                     key={problem.id}
                     href={`/problems/${problem.id}`}
                     className="flex items-center justify-between p-5 hover:bg-zinc-800/30 transition-all group"
                   >
                     <div className="flex items-center gap-6">
-                      <div className="flex-shrink-0">
-                        <Circle className="h-5 w-5 text-zinc-700 group-hover:text-emerald-500/50 transition-colors" />
-                      </div>
                       <div>
                         <h4 className="text-white font-semibold group-hover:text-emerald-400 transition-colors">
                           {problem.title}

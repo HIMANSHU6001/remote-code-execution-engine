@@ -1,9 +1,24 @@
 FROM python:3.11-slim-bookworm
 
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Create a clean, non-root user
+RUN groupadd -r apiuser && useradd -r -g apiuser apiuser
+
 WORKDIR /app
 
+# Copy dependency files first
+COPY pyproject.toml uv.lock ./
+RUN mkdir -p api auth config db rate_limit scripts shared worker && \
+    uv pip install --no-cache --system . && \
+    chown -R apiuser:apiuser /app
+
+# Copy the rest of the application code
 COPY . .
-RUN pip install --no-cache-dir -e .
+
+# Switch to the non-root user
+USER apiuser
 
 EXPOSE 8000
 

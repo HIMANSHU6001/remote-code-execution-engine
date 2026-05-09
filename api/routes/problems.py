@@ -13,9 +13,10 @@ from sqlalchemy.orm import selectinload
 from auth.dependencies import get_current_user
 from db.base import get_db
 from db.models import Problem, Topic
-from db.queries import create_problem, get_problem_with_sample_cases
+from db.queries import create_problem, get_problem_with_sample_cases, get_problem_with_sample_cases_and_language_configs
 from shared.enums import Difficulty
 from shared.models import (
+    LanguageConfigResponse,
     PaginatedProblemResponse,
     ProblemCreateRequest,
     ProblemListResponse,
@@ -123,11 +124,11 @@ async def get_problem(
     user_id: Annotated[uuid.UUID, Depends(get_current_user)],  # noqa: ARG001 — auth enforced
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ProblemResponse:
-    """Return problem metadata and sample test cases.
+    """Return problem metadata, sample test cases, and language configs with boilerplate.
 
     Hidden test cases (is_sample=False) are NEVER returned.
     """
-    problem = await get_problem_with_sample_cases(db, problem_id)
+    problem = await get_problem_with_sample_cases_and_language_configs(db, problem_id)
     if problem is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Problem not found")
 
@@ -142,6 +143,10 @@ async def get_problem(
         if tc.is_sample
     ]
 
+    language_configs = [
+        LanguageConfigResponse.model_validate(lc) for lc in problem.language_configs
+    ]
+
     return ProblemResponse(
         id=problem.id,
         title=problem.title,
@@ -151,4 +156,5 @@ async def get_problem(
         hints=problem.hints,
         topics=[TopicResponse.model_validate(t) for t in problem.topics],
         sample_test_cases=sample_cases,
+        language_configs=language_configs,
     )

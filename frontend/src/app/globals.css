@@ -4,6 +4,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* System font fallbacks */
+:root {
+  --font-poppins: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Monaco", "Menlo", "Ubuntu Mono", "JetBrains Mono", monospace;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

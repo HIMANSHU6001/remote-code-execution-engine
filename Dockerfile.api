@@ -1,9 +1,15 @@
 FROM python:3.11-slim-bookworm
 
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 WORKDIR /app
 
+COPY pyproject.toml uv.lock ./
+RUN mkdir -p api auth config db rate_limit scripts shared worker && \
+    uv pip install --no-cache --system -e ".[dev]"
+
 COPY . .
-RUN pip install --no-cache-dir -e ".[dev]"
 
 EXPOSE 8000
 

@@ -16,6 +16,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "firebase": "^12.13.0",
+    "jose": "^6.2.3",
     "js-cookie": "^3.0.5",
     "lucide-react": "^1.14.0",
     "next": "16.2.5",
