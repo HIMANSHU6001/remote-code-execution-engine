@@ -211,6 +211,30 @@ The engine employs multiple layers of security to prevent malicious code from im
 
 ---
 
+## 🚀 Deployment
+
+The project includes a GitHub Actions workflow for automated deployment to a DigitalOcean Droplet.
+
+### CI/CD Pipeline
+Whenever you push to the `main` branch, the pipeline will:
+1. **Detect Changes**: Identifies if database models, migrations, or sandbox Dockerfiles have changed.
+2. **Conditional DB Reset**: If database-related changes are detected, it drops Docker volumes (`postgres_data`), rebuilds the database, and runs the seed script.
+3. **Sandbox Rebuild**: If sandbox source files change, it rebuilds the language-specific images on the droplet.
+4. **Zero-Downtime Update**: Updates the application containers with the latest code.
+
+### Required GitHub Secrets
+To enable the pipeline, add the following secrets to your GitHub repository (**Settings > Secrets and variables > Actions**):
+
+| Secret | Description |
+| --- | --- |
+| `DROPLET_IP` | The public IP address of your DigitalOcean droplet. |
+| `DROPLET_USER` | The SSH username (usually `root`). |
+| `DROPLET_SSH_KEY` | (Recommended) The private SSH key for the droplet. |
+| `DROPLET_PASSWORD` | (Alternative) The root password for the droplet. |
+| `PROJECT_PATH` | The absolute path to the project on the droplet (e.g., `/root/remote-code-execution-engine`). |
+
+---
+
 ## ⚖️ License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
