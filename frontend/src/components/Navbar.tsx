@@ -53,9 +53,6 @@ const Navbar = () => {
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white rounded-full">
-                <User className="h-5 w-5" />
-              </Button>
               <Button
                 variant="ghost"
                 size="sm"
