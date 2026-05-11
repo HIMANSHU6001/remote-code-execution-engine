@@ -15,6 +15,7 @@ import { ProblemHeader } from "./ProblemHeader";
 import { DescriptionPanel } from "./DescriptionPanel";
 import { EditorPanel } from "./EditorPanel";
 import { ConsolePanel } from "./ConsolePanel";
+import { AICodingPanel } from "./AIAgentPanel";
 import type { ProblemWithDescription, LanguageConfigMap } from "./types";
 import { useParams } from "next/navigation";
 
@@ -31,7 +32,10 @@ export default function ProblemSolvingPage() {
   const [activeTab, setActiveTab] = useState("testcases");
   const [activeSampleCaseIndex, setActiveSampleCaseIndex] = useState(0);
   const [activeResultCaseIndex, setActiveResultCaseIndex] = useState(0);
+  const [editor, setEditor] = useState<any>(null);
+  const [isAIPanelOpen, setIsAIPanelOpen] = useState(false);
   const { isAuthenticated } = useAuth();
+  const [latestJobId, setLatestJobId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -96,6 +100,7 @@ export default function ProblemSolvingPage() {
       });
 
       if (res.data) {
+        setLatestJobId(res.data.job_id);
         pollStatus(res.data.job_id);
       }
     } catch (err) {
@@ -142,6 +147,8 @@ export default function ProblemSolvingPage() {
         problem={problem}
         language={language}
         onLanguageChange={handleLanguageChange}
+        isAIOpen={isAIPanelOpen}
+        onToggleAI={() => setIsAIPanelOpen(!isAIPanelOpen)}
       />
 
       <main className="flex-1 overflow-hidden">
@@ -154,7 +161,7 @@ export default function ProblemSolvingPage() {
           <ResizableHandle className="w-1 bg-[#0a0a0a] hover:bg-emerald-500/50 transition-colors" />
 
           {/* Right Pane: Editor & Console */}
-          <ResizablePanel defaultSize={60} minSize={30}>
+          <ResizablePanel defaultSize={isAIPanelOpen ? 45 : 60} minSize={30}>
             <ResizablePanelGroup orientation="vertical">
               {/* Editor */}
               <ResizablePanel defaultSize={70} minSize={20}>
@@ -162,6 +169,7 @@ export default function ProblemSolvingPage() {
                   language={language}
                   code={code}
                   onCodeChange={setCode}
+                  onEditorMount={setEditor}
                 />
               </ResizablePanel>
 
@@ -181,10 +189,26 @@ export default function ProblemSolvingPage() {
                   isSubmitting={isSubmitting}
                   onRun={() => handleSubmit(false)}
                   onSubmit={() => handleSubmit(true)}
+                  editor={editor}
+                  code={code}
                 />
               </ResizablePanel>
             </ResizablePanelGroup>
           </ResizablePanel>
+
+          {isAIPanelOpen && (
+            <>
+              <ResizableHandle className="w-1 bg-[#0a0a0a] hover:bg-emerald-500/50 transition-colors" />
+              <ResizablePanel defaultSize={20} minSize={15}>
+                <AICodingPanel
+                  code={code}
+                  editor={editor}
+                  onClose={() => setIsAIPanelOpen(false)}
+                  latestJobId={latestJobId}
+                />
+              </ResizablePanel>
+            </>
+          )}
         </ResizablePanelGroup>
       </main>
     </div>

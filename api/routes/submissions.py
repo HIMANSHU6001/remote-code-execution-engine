@@ -53,8 +53,6 @@ async def get_submission_status(
         redis_key = f"run_details:{str(job_id)}"
         cached_details = await redis.get(redis_key)
         
-        print(f"Checking Redis for run details with key: {redis_key} | Found: {cached_details is not None}")
-        
         if cached_details:
             response_data["details"] = json.loads(cached_details)
 

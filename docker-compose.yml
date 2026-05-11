@@ -1,7 +1,8 @@
 services:
   postgres:
     image: postgres:16-alpine
-    restart: unless-stopped
+    restart: always
+    container_name: rce_postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -12,44 +13,65 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
-      interval: 5s
+      interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 5
+      start_period: 40s
     env_file:
       - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   redis:
     image: redis:7-alpine
-    restart: unless-stopped
+    restart: always
+    container_name: rce_redis
+    command: redis-server --appendonly yes
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
+      interval: 10s
       timeout: 3s
-      retries: 10
+      retries: 5
+      start_period: 40s
     env_file:
       - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   migrate:
     build:
       context: .
       dockerfile: Dockerfile.api.prod
+    container_name: rce_migrate
     depends_on:
       postgres:
         condition: service_healthy
-    volumes:
-      - .:/app
     command: python -m alembic upgrade head
     restart: "no"
     env_file:
       - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   api:
     build:
       context: .
       dockerfile: Dockerfile.api.prod
-    restart: unless-stopped
+    restart: always
+    container_name: rce_api
     ports:
       - "8000:8000"
     depends_on:
@@ -59,37 +81,66 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
-    volumes:
-      - .:/app
-    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+      mcp-server:
+        condition: service_healthy
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --workers 4
     env_file:
       - .env
+    environment:
+      - MCP_SERVER_URL=http://mcp-server:8001/sse
+      - OPEN_ROUTER_API_KEY=${OPEN_ROUTER_API_KEY}
+      - OPEN_ROUTER_BASE_URL=${OPEN_ROUTER_BASE_URL}
+      - OPEN_ROUTER_MODEL=${OPEN_ROUTER_MODEL}
+      - REDIS_URL=redis://redis:6379/0
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   frontend:
     build:
       context: .
-      dockerfile: Dockerfile.frontend
-    restart: unless-stopped
+      dockerfile: Dockerfile.frontend.prod
+    restart: always
+    container_name: rce_frontend
     ports:
-      - "3000:3000"
+      - "3000:80"
     env_file:
       - ./frontend/.env
     depends_on:
       - api
-    volumes:
-      - ./frontend:/app/frontend
-      - /app/frontend/node_modules
-      - /app/frontend/.next
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   worker:
     build:
       context: .
       dockerfile: Dockerfile.worker.prod
-    restart: unless-stopped
-    user: root
+      args:
+        DOCKER_GID: 999
+    restart: always
+    container_name: rce_worker
     environment:
       - HOST_PROJECT_ROOT=${HOST_PROJECT_ROOT}
       - HOST_SANDBOX_ROOT=${HOST_SANDBOX_ROOT}
+      - PYTHONUNBUFFERED=1
     depends_on:
       postgres:
         condition: service_healthy
@@ -99,25 +150,63 @@ services:
         condition: service_completed_successfully
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./docker/sandbox:/sandbox/jobs
+      - sandbox_data:/sandbox/jobs
       - ./infra/seccomp.json:/etc/rce/seccomp.json:ro
-      - .:/app
-    command: celery -A worker.app worker --loglevel=info --concurrency=2
+    command: celery -A worker.app worker --loglevel=info --concurrency=4
     env_file:
       - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   beat:
     build:
       context: .
       dockerfile: Dockerfile.worker.prod
-    restart: unless-stopped
+      args:
+        DOCKER_GID: 999
+    restart: always
+    container_name: rce_beat
     depends_on:
       redis:
         condition: service_healthy
     command: celery -A worker.app beat --loglevel=info --schedule=/tmp/celerybeat-schedule
     env_file:
       - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mcp-server:
+    build:
+      context: ./mcp-server
+    restart: always
+    container_name: rce_mcp_server
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "8001:8001"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/sse')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   postgres_data:
+  redis_data:
   sandbox_data:

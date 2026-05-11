@@ -66,6 +66,7 @@ def _finalise(
     failed_tc_id: Any | None = None,
     actual: str | None = None,
     expected: str | None = None,
+    details: list[dict] | None = None,
 ) -> None:
     """Write final result to PostgreSQL and publish to Redis Pub/Sub."""
     clean_stdout = stdout_snippet.strip()[:1000] if stdout_snippet else None
@@ -118,6 +119,9 @@ def _finalise(
         "expected_output": expected,
     }
     _redis.publish(f"job_updates:{job_id}", json.dumps(payload))
+
+    if details:
+        _redis.setex(f"run_details:{job_id}", 3600, json.dumps(details))
 
 
 def _finalise_run(
@@ -328,6 +332,7 @@ def evaluate_submission(self: Task, job_id: str) -> None:
         total_cases = len(test_cases)
         passed_cases = 0
         user_logs_parts: list[str] = []
+        details: list[dict] = []
         
         if is_submit:
             # PATH B: Fail-Fast evaluation for Submit
@@ -346,6 +351,15 @@ def evaluate_submission(self: Task, job_id: str) -> None:
                     user_logs_parts.append(res["stdout"])
 
                 tc_verdict = _check_verdict(actual, expected)
+                
+                details.append({
+                    "test_case_id": str(tc.id),
+                    "input": tc.input_data,
+                    "expected": expected,
+                    "actual": actual,
+                    "verdict": tc_verdict.value,
+                    "stdout": res["stdout"],
+                })
 
                 if tc_verdict == Verdict.ACC:
                     passed_cases += 1
@@ -370,6 +384,7 @@ def evaluate_submission(self: Task, job_id: str) -> None:
                 failed_tc_id=failed_tc_id,
                 actual=actual_for_db,
                 expected=expected_for_db,
+                details=details,
             )
             
         else:

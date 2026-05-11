@@ -11,18 +11,16 @@ import {
   type Difficulty
 } from "@/lib/api-client";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Search,
   ChevronRight,
   Filter,
   CheckCircle2,
-  Circle,
-  Trophy,
   Zap,
   BarChart3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Navbar from "@/components/Navbar";
 
 export default function ProblemsPage() {
   return (
@@ -77,7 +75,9 @@ function ProblemsContent() {
   );
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-6xl">
+    <>
+      <Navbar />
+      <div className="container mx-auto px-4 py-12 max-w-6xl">
       {/* Hero Section */}
       <div className="mb-12">
         <h1 className="text-4xl font-bold text-white mb-4 tracking-tight">Pick Your Challenge</h1>
@@ -206,6 +206,7 @@ function ProblemsContent() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

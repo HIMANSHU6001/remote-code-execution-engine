@@ -1,0 +1,22 @@
+# Stage 1: Build the frontend
+FROM node:22-alpine AS builder
+WORKDIR /app
+
+# Change these lines to point to the frontend directory
+COPY frontend/package*.json ./
+RUN npm ci
+
+# Copy the rest of the frontend code
+COPY frontend/ ./
+
+# Run the build
+RUN npm run build
+
+# Stage 2: Serve with Nginx
+FROM nginx:alpine
+# Copy from builder stage
+COPY --from=builder /app/out /usr/share/nginx/html
+# Note: If you are using 'next build', the output is usually in 'out' (for static export) 
+# or '.next'. For Nginx, you want a static export.
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

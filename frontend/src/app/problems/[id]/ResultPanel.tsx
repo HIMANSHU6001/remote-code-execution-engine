@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+// ResultPanel.tsx
 import {
   CheckCircle2,
   XCircle,
@@ -6,6 +6,7 @@ import {
   Database,
   Terminal,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SubmissionDetailResponseWithCases, SubmissionCaseDetail } from "./types";
@@ -16,6 +17,51 @@ interface ResultPanelProps {
   isSubmitting: boolean;
   activeResultCaseIndex: number;
   onCaseChange: (index: number) => void;
+}
+
+function StatBadge({
+  icon: Icon,
+  value,
+}: {
+  icon: React.ElementType;
+  value: string;
+}) {
+  return (
+    <div
+      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg"
+      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+    >
+      <Icon className="h-3.5 w-3.5 text-zinc-600" />
+      <span className="text-xs font-mono text-zinc-400">{value}</span>
+    </div>
+  );
+}
+
+function CodeBlock({ label, content, variant = "default" }: {
+  label: string;
+  content: string;
+  variant?: "default" | "error";
+}) {
+  return (
+    <div className="space-y-1.5">
+      <p
+        className="text-[10px] font-bold uppercase tracking-[0.12em]"
+        style={{ color: variant === "error" ? "#f43f5e" : "#52525b" }}
+      >
+        {label}
+      </p>
+      <pre
+        className="p-3 rounded-xl font-mono text-xs leading-relaxed overflow-x-auto min-h-[52px]"
+        style={{
+          background: variant === "error" ? "rgba(244,63,94,0.05)" : "#111113",
+          border: `1px solid ${variant === "error" ? "rgba(244,63,94,0.18)" : "rgba(255,255,255,0.07)"}`,
+          color: variant === "error" ? "#fda4af" : "#a1a1aa",
+        }}
+      >
+        {content || "—"}
+      </pre>
+    </div>
+  );
 }
 
 export function ResultPanel({
@@ -30,147 +76,145 @@ export function ResultPanel({
 
   if (isSubmitting) {
     return (
-      <div className="h-full flex flex-col items-center justify-center gap-4 py-8">
-        <Loader2 className="h-8 w-8 text-emerald-500 animate-spin" />
-        <p className="text-zinc-500 text-sm animate-pulse">
-          Executing code on secure engine...
-        </p>
+      <div className="h-full flex flex-col items-center justify-center gap-4 py-12">
+        <div className="relative">
+          <div
+            className="absolute inset-0 rounded-full blur-lg"
+            style={{ background: "rgba(16,185,129,0.2)" }}
+          />
+          <Loader2 className="h-8 w-8 text-emerald-400 animate-spin relative z-10" />
+        </div>
+        <div className="text-center space-y-1">
+          <p className="text-sm font-medium text-zinc-400">Running your code</p>
+          <p className="text-xs text-zinc-600">Executing on secure engine…</p>
+        </div>
       </div>
     );
   }
 
   if (!submissionResult) {
     return (
-      <div className="h-full flex items-center justify-center text-zinc-600 text-sm italic py-12">
-        Run your code to see results
+      <div className="h-full flex flex-col items-center justify-center gap-3 py-12">
+        <Terminal className="h-8 w-8 text-zinc-700" />
+        <p className="text-sm text-zinc-600">Run your code to see results</p>
       </div>
     );
   }
 
+  const isAccepted = submissionResult.verdict === "ACC";
+
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {submissionResult.verdict === "ACC" ? (
-            <div className="flex items-center gap-2 text-emerald-500 font-bold text-xl">
-              <CheckCircle2 className="h-6 w-6" />
-              Accepted
-            </div>
+    <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-200">
+      {/* Verdict row */}
+      <div
+        className="flex items-center justify-between p-4 rounded-xl border"
+        style={{
+          background: isAccepted ? "rgba(16,185,129,0.05)" : "rgba(244,63,94,0.05)",
+          borderColor: isAccepted ? "rgba(16,185,129,0.18)" : "rgba(244,63,94,0.18)",
+        }}
+      >
+        <div className="flex items-center gap-2.5">
+          {isAccepted ? (
+            <CheckCircle2 className="h-5 w-5 text-emerald-400" />
           ) : (
-            <div className="flex items-center gap-2 text-rose-500 font-bold text-xl">
-              <XCircle className="h-6 w-6" />
-              {submissionResult.verdict}
-            </div>
+            <XCircle className="h-5 w-5 text-rose-400" />
           )}
+          <span
+            className="font-bold text-lg tracking-tight"
+            style={{ color: isAccepted ? "#34d399" : "#fb7185" }}
+          >
+            {isAccepted ? "Accepted" : submissionResult.verdict}
+          </span>
         </div>
-        <div className="flex gap-4">
-          <div className="flex items-center gap-1.5 text-zinc-400">
-            <Terminal className="h-4 w-4" />
-            <span className="text-xs">
-              {submissionResult.passed_test_cases ?? 0}/
-              {submissionResult.total_test_cases ?? 0}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 text-zinc-400">
-            <Clock className="h-4 w-4" />
-            <span className="text-xs">{submissionResult.execution_time_ms}ms</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-zinc-400">
-            <Database className="h-4 w-4" />
-            <span className="text-xs">{submissionResult.memory_used_mb}MB</span>
-          </div>
+
+        <div className="flex items-center gap-2">
+          <StatBadge
+            icon={Terminal}
+            value={`${submissionResult.passed_test_cases ?? 0}/${submissionResult.total_test_cases ?? 0}`}
+          />
+          <StatBadge
+            icon={Clock}
+            value={`${submissionResult.execution_time_ms}ms`}
+          />
+          <StatBadge
+            icon={Database}
+            value={`${submissionResult.memory_used_mb}MB`}
+          />
         </div>
       </div>
 
+      {/* Case tabs */}
       {resultCaseDetails.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex gap-2 flex-wrap rounded-xl border border-zinc-800 bg-zinc-900/60 p-2">
-            {resultCaseDetails.map((tc, i) => (
-              <Button
-                key={tc.test_case_id || i}
-                variant="default"
-                size="sm"
-                onClick={() => onCaseChange(i)}
-                className={cn(
-                  "h-8 rounded-lg border text-xs font-semibold px-3 transition-colors",
-                  activeResultCaseIndex === i
-                    ? "bg-brand-500 border-brand-400 text-zinc-950 hover:bg-brand-400"
-                    : "bg-zinc-800 border-zinc-700 text-zinc-200 hover:bg-zinc-700"
-                )}
-              >
-                Case {i + 1}
-              </Button>
-            ))}
+        <>
+          <div
+            className="flex gap-1.5 flex-wrap p-1.5 rounded-xl"
+            style={{
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.06)",
+            }}
+          >
+            {resultCaseDetails.map((tc, i) => {
+              const caseVerdict = (tc as SubmissionCaseDetail).verdict;
+              const isPass = caseVerdict === "ACC" || caseVerdict === "PASS";
+              const isActive = activeResultCaseIndex === i;
+
+              return (
+                <button
+                  key={tc.test_case_id || i}
+                  onClick={() => onCaseChange(i)}
+                  className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-semibold transition-all"
+                  style={
+                    isActive
+                      ? {
+                        background: "rgba(16,185,129,0.15)",
+                        border: "1px solid rgba(16,185,129,0.3)",
+                        color: "#34d399",
+                      }
+                      : {
+                        background: "rgba(255,255,255,0.04)",
+                        border: "1px solid rgba(255,255,255,0.07)",
+                        color: "#71717a",
+                      }
+                  }
+                >
+                  <span
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{
+                      background: isPass ? "#10b981" : "#f43f5e",
+                      boxShadow: isPass ? "0 0 4px #10b981" : "0 0 4px #f43f5e",
+                    }}
+                  />
+                  Case {i + 1}
+                </button>
+              );
+            })}
           </div>
 
-          <div className="space-y-2">
-            <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
-              Input
-            </p>
-            <pre className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl font-mono text-sm text-zinc-300 min-h-[60px]">
-              {activeResultCase?.input || "N/A"}
-            </pre>
+          <CodeBlock label="Input" content={activeResultCase?.input || "N/A"} />
+          {activeResultCase?.stdout && (
+            <CodeBlock label="Stdout" content={activeResultCase.stdout} />
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            <CodeBlock label="Your Output" content={activeResultCase?.actual || "No output"} />
+            <CodeBlock label="Expected" content={activeResultCase?.expected || "N/A"} />
           </div>
-
-          <div className="space-y-2">
-            <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
-              Stdout
-            </p>
-            <pre className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl font-mono text-sm text-zinc-300 min-h-[60px]">
-              {activeResultCase?.stdout || "No stdout"}
-            </pre>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
-                Output
-              </p>
-              <pre className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl font-mono text-sm text-zinc-300 min-h-[60px]">
-                {activeResultCase?.actual || "No output"}
-              </pre>
-            </div>
-            <div className="space-y-2">
-              <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
-                Expected Output
-              </p>
-              <pre className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl font-mono text-sm text-zinc-300 min-h-[60px]">
-                {activeResultCase?.expected || "N/A"}
-              </pre>
-            </div>
-          </div>
-        </div>
+        </>
       )}
 
+      {/* Stderr */}
       {submissionResult.stderr_snippet && (
-        <div className="space-y-2">
-          <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">
-            Error Output
-          </p>
-          <pre className="p-4 bg-rose-500/5 border border-rose-500/20 rounded-xl font-mono text-xs text-rose-200 overflow-x-auto">
-            {submissionResult.stderr_snippet}
-          </pre>
-        </div>
+        <CodeBlock
+          label="Error Output"
+          content={submissionResult.stderr_snippet}
+          variant="error"
+        />
       )}
 
+      {/* Fallback when no case details */}
       {resultCaseDetails.length === 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-              Output
-            </p>
-            <pre className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl font-mono text-xs text-zinc-300 min-h-[60px]">
-              {submissionResult.actual_output || "No output"}
-            </pre>
-          </div>
-          <div className="space-y-2">
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-              Expected Output
-            </p>
-            <pre className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl font-mono text-xs text-zinc-300 min-h-[60px]">
-              {submissionResult.expected_output || "N/A"}
-            </pre>
-          </div>
+        <div className="grid grid-cols-2 gap-3">
+          <CodeBlock label="Your Output" content={submissionResult.actual_output || "No output"} />
+          <CodeBlock label="Expected" content={submissionResult.expected_output || "N/A"} />
         </div>
       )}
     </div>

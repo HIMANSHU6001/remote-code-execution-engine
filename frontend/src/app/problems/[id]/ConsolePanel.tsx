@@ -1,9 +1,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Play, Send, Loader2 } from "lucide-react";
+import { Play, Send, Loader2, FlaskConical, BarChart2, Sparkles } from "lucide-react";
 import { TestcasesPanel } from "./TestcasesPanel";
 import { ResultPanel } from "./ResultPanel";
-import type { ProblemWithDescription, SubmissionDetailResponseWithCases } from "./types";
+import type { ProblemWithDescription } from "./types";
 import type { SubmissionDetailResponse } from "@/lib/api-client";
 
 interface ConsolePanelProps {
@@ -18,6 +17,8 @@ interface ConsolePanelProps {
   isSubmitting: boolean;
   onRun: () => void;
   onSubmit: () => void;
+  editor: any;
+  code: string;
 }
 
 export function ConsolePanel({
@@ -34,39 +35,60 @@ export function ConsolePanel({
   onSubmit,
 }: ConsolePanelProps) {
   return (
-    <div className="h-full flex flex-col bg-[#121212]">
-      <Tabs value={activeTab} onValueChange={onTabChange} className="flex-1 flex flex-col">
-        <div className="flex items-center justify-between px-2 h-10 border-b border-zinc-800 shrink-0 bg-[#1a1a1a]">
-          <TabsList className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-1 h-8">
-            <TabsTrigger
-              value="testcases"
-              className="h-6 px-3 rounded-md font-semibold tracking-wide text-zinc-400 data-[state=active]:bg-emerald-500 data-[state=active]:text-zinc-950 data-[state=active]:shadow-[0_0_0_1px_rgba(16,185,129,0.45)]"
-            >
-              Testcases
-            </TabsTrigger>
-            <TabsTrigger
-              value="result"
-              className="h-6 px-3 rounded-md font-semibold tracking-wide text-zinc-400 data-[state=active]:bg-emerald-500 data-[state=active]:text-zinc-950 data-[state=active]:shadow-[0_0_0_1px_rgba(16,185,129,0.45)]"
-            >
-              Result
-            </TabsTrigger>
+    <div className="h-full flex flex-col no-scrollbar" style={{ background: "#0c0c0e" }}>
+      <Tabs value={activeTab} onValueChange={onTabChange} className="flex-1 flex flex-col min-h-0">
+        {/* Tab bar */}
+        <div
+          className="flex items-center justify-between px-3 shrink-0 border-b"
+          style={{
+            height: "41px",
+            borderColor: "rgba(255,255,255,0.06)",
+            background: "rgba(255,255,255,0.02)",
+          }}
+        >
+          <TabsList
+            className="flex items-center gap-0.5 bg-transparent border-0 p-0 h-auto"
+          >
+            {[
+              { value: "testcases", label: "Testcases", icon: FlaskConical },
+              { value: "result", label: "Result", icon: BarChart2 },
+            ].map(({ value, label, icon: Icon }) => (
+              <TabsTrigger
+                key={value}
+                value={value}
+                className="relative flex items-center gap-1.5 h-8 px-3 rounded-lg text-[11px] font-semibold tracking-wide border-0 transition-all
+                  text-zinc-500
+                  data-[state=active]:text-emerald-400
+                  data-[state=active]:bg-emerald-500/10
+                  hover:text-zinc-300
+                  hover:bg-white/5"
+              >
+                <Icon className="h-3 w-3" />
+                {label}
+              </TabsTrigger>
+            ))}
           </TabsList>
-          <div className="flex items-center gap-2 px-2">
-            <Button
+
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            <button
               onClick={onRun}
               disabled={isSubmitting}
-              variant="ghost"
-              size="sm"
-              className="h-7 text-zinc-400 hover:text-white gap-1.5 text-[10px] font-bold uppercase"
+              className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-[11px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all disabled:opacity-40"
             >
               <Play className="h-3 w-3" />
               Run
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={onSubmit}
               disabled={isSubmitting}
-              size="sm"
-              className="h-7 bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 text-[10px] font-bold uppercase"
+              className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-[11px] font-bold uppercase tracking-wider text-white transition-all disabled:opacity-60"
+              style={{
+                background: isSubmitting
+                  ? "rgba(5,150,105,0.4)"
+                  : "linear-gradient(135deg, #059669 0%, #047857 100%)",
+                boxShadow: isSubmitting ? "none" : "0 0 12px rgba(5,150,105,0.25)",
+              }}
             >
               {isSubmitting ? (
                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -74,13 +96,14 @@ export function ConsolePanel({
                 <Send className="h-3 w-3" />
               )}
               Submit
-            </Button>
+            </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden relative">
-          <div className="absolute inset-0 no-scrollbar overflow-y-auto p-4">
-            <TabsContent value="testcases" className="m-0 space-y-4">
+        {/* Content */}
+        <div className="flex-1 min-h-0 relative">
+          <div className="absolute inset-0 overflow-y-auto no-scrollbar">
+            <TabsContent value="testcases" className="m-0 p-4 space-y-4">
               <TestcasesPanel
                 problem={problem}
                 activeSampleCaseIndex={activeSampleCaseIndex}
@@ -88,7 +111,7 @@ export function ConsolePanel({
               />
             </TabsContent>
 
-            <TabsContent value="result" className="m-0 h-full">
+            <TabsContent value="result" className="m-0 p-4 h-full">
               <ResultPanel
                 submissionResult={submissionResult}
                 isSubmitting={isSubmitting}

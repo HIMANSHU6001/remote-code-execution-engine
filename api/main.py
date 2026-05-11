@@ -2,6 +2,7 @@
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+import contextlib
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,16 +10,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.routes import auth, health, problems, submissions, submit, topics
 from api.websocket import router as ws_router
 from config.settings import get_allowed_origins
+from api.agent import server
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Startup: nothing to do (SQLAlchemy engine is created at import time)
+    await server.connect()
     yield
     # Shutdown: dispose async engine
     from db.base import engine
-
     await engine.dispose()
+    if hasattr(server, "disconnect"):
+        with contextlib.suppress(BaseException):
+            await server.disconnect()
 
 
 def create_app() -> FastAPI:
