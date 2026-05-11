@@ -1,5 +1,4 @@
 # 🚀 CodeSpace
-
 A secure, scalable online judge platform for running untrusted code in isolated environments.
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
@@ -19,6 +18,7 @@ CodeSpace is a production-ready online judge and code execution platform. Users 
 **Tech Stack:** FastAPI (API) → Celery (Task Queue) → Docker (Sandbox) + PostgreSQL (Database) + Next.js (Frontend)
 
 ### Key Features
+
 - **🔒 Secure Sandboxing** — Rootless Docker containers with seccomp restrictions and network isolation
 - **⚡ Asynchronous Execution** — Non-blocking task queue powered by Celery and Redis
 - **🛰️ Real-Time Results** — WebSocket integration for instant submission feedback
@@ -28,9 +28,27 @@ CodeSpace is a production-ready online judge and code execution platform. Users 
 
 ---
 
+## 🎬 Demo
+
+<table align="center">
+  <tr>
+    <th>✅ Successful Submission</th>
+    <th>❌ Error Cases</th>
+    <th>🤖 AI Feature</th>
+  </tr>
+  <tr>
+    <td><video src="https://github.com/user-attachments/assets/a2b43e1f-7116-49c4-bc0d-bc359b25a087" controls width="280"></video></td>
+    <td><video src="https://github.com/user-attachments/assets/6de22223-7c35-4cb8-9082-ae2a0e089fc1" controls width="280"></video></td>
+    <td><video src="https://github.com/user-attachments/assets/6a45c8fd-eefd-4436-bc31-94ffe28f8304" controls width="280"></video></td>
+  </tr>
+</table>
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - **Python** 3.10+
 - **Node.js** 20+
 - **Docker** 24.x+
@@ -39,57 +57,34 @@ CodeSpace is a production-ready online judge and code execution platform. Users 
 ### Setup & Run
 
 1. **Clone & Setup Backend**
-   ```bash
+```bash
    python -m venv .venv
    source .venv/bin/activate  # Windows: .venv\Scripts\activate
    pip install -e ".[dev]"
-   ```
+```
 
 2. **Setup Frontend**
-   ```bash
+```bash
    cd frontend
    npm install
-   ```
+```
 
 3. **Build Sandbox Images**
-   ```bash
+```bash
    bash scripts/build_images.sh
-   ```
+```
 
 4. **Seed Database** (Optional)
-   ```bash
+```bash
    python scripts/seed_db.py
-   ```
+```
 
 5. **Start Services**
-   ```bash
+```bash
    docker-compose up --build
-   ```
+```
 
    The API will be available at `http://localhost:8000`, Frontend at `http://localhost:3000`
-
-### Demo Videos
-
-#### Successful Code Submission
-<video controls width="640">
-   <source src="https://himanshu6001.github.io/remote-code-execution-engine/videos/accepted_execution_flow.mp4" type="video/mp4">
-   Your browser does not support the video tag.
-</video>
-
-
-#### Error Cases 
-<video controls width="640">
-   <source src="https://himanshu6001.github.io/remote-code-execution-engine/videos/wrong_execution_flow.mp4" type="video/mp4">
-   Your browser does not support the video tag.
-</video>
-
-
-#### AI Feature
-<video controls width="640">
-   <source src="https://himanshu6001.github.io/remote-code-execution-engine/videos/ai_usage_flow.mp4" type="video/mp4">
-   Your browser does not support the video tag.
-</video>
-
 
 ---
 
