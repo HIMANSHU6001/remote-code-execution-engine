@@ -34,12 +34,26 @@ def run_command(command: list[str], cwd: Path) -> None:
 
 
 def _normalize_type_name(raw: str) -> str:
-    value = raw.upper().strip()
-    for ch in " ()[],.":
-        value = value.replace(ch, "_")
-    while "__" in value:
-        value = value.replace("__", "_")
-    return value.strip("_") or "TEXT"
+    """Map database column types to Mermaid ER diagram types."""
+    value = str(raw).upper().strip()
+    
+    # Map common database types to Mermaid-friendly types
+    if any(t in value for t in ["VARCHAR", "TEXT", "STRING"]):
+        return "STRING"
+    elif any(t in value for t in ["INT", "BIGINT", "SMALLINT"]):
+        return "INT"
+    elif any(t in value for t in ["UUID"]):
+        return "UUID"
+    elif any(t in value for t in ["BOOLEAN", "BOOL"]):
+        return "BOOL"
+    elif any(t in value for t in ["FLOAT", "DOUBLE", "NUMERIC", "DECIMAL"]):
+        return "FLOAT"
+    elif any(t in value for t in ["DATE", "TIMESTAMP", "TIME"]):
+        return "DATETIME"
+    elif any(t in value for t in ["ARRAY"]):
+        return "ARRAY"
+    else:
+        return "TEXT"
 
 
 def _column_type_label(column: Column[Any]) -> str:
@@ -61,20 +75,18 @@ def _single_column_unique_names(table: Table) -> set[str]:
 
 
 def _render_table(table: Table) -> list[str]:
+    """Render a table in ER diagram format with simplified attributes."""
     lines = [f"    {table.name.upper()} {{"]
-    unique_names = _single_column_unique_names(table)
+    
+    # Mermaid reserved keywords to rename
+    reserved_keywords = {"language", "entity", "relationship", "type", "attribute"}
 
     for column in table.columns:
-        attrs: list[str] = []
-        if column.primary_key:
-            attrs.append("PK")
-        if column.foreign_keys:
-            attrs.append("FK")
-        if column.name in unique_names:
-            attrs.append("UK")
-
-        attr_text = f" {' '.join(attrs)}" if attrs else ""
-        lines.append(f"      {_column_type_label(column)} {column.name}{attr_text}")
+        # Rename column name if it's a reserved keyword
+        col_name = f"{column.name}_col" if column.name.lower() in reserved_keywords else column.name
+        
+        # Simplified format: just type and name (attributes handled by relationships/cardinality)
+        lines.append(f"      {_column_type_label(column)} {col_name}")
 
     lines.append("    }")
     return lines

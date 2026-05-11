@@ -1,88 +1,88 @@
 erDiagram
 
     OAUTH_ACCOUNTS {
-      UUID id PK
-      UUID user_id FK
-      TEXT provider
-      TEXT provider_account_id
-      TIMESTAMP created_at
-      TIMESTAMP updated_at
+      UUID id
+      UUID user_id
+      STRING provider
+      STRING provider_account_id
+      DATETIME created_at
+      DATETIME updated_at
     }
 
     PROBLEM_LANGUAGE_CONFIGS {
-      UUID problem_id PK FK
-      VARCHAR_6 language PK
-      TEXT boilerplate
-      TEXT driver_code
+      UUID problem_id
+      STRING language_col
+      STRING boilerplate
+      STRING driver_code
     }
 
     PROBLEM_TOPICS {
-      UUID problem_id PK FK
-      INTEGER topic_id PK FK
+      UUID problem_id
+      INT topic_id
     }
 
     PROBLEMS {
-      UUID id PK
-      TEXT title
-      TEXT description
-      VARCHAR_6 difficulty
-      INTEGER base_time_limit_ms
-      INTEGER base_memory_limit_mb
-      UUID created_by FK
-      TIMESTAMP created_at
-      TIMESTAMP updated_at
+      UUID id
+      STRING title
+      STRING description
+      STRING difficulty
+      INT base_time_limit_ms
+      INT base_memory_limit_mb
+      UUID created_by
+      DATETIME created_at
+      DATETIME updated_at
       ARRAY hints
     }
 
     SUBMISSIONS {
-      UUID id PK
-      UUID user_id FK
-      UUID problem_id FK
-      VARCHAR_6 language
-      TEXT code
-      VARCHAR_9 status
-      VARCHAR_3 verdict
-      INTEGER execution_time_ms
-      NUMERIC_8_2 memory_used_mb
-      TEXT stdout_snippet
-      TEXT stderr_snippet
-      TEXT actual_output
-      TEXT expected_output
-      BOOLEAN is_submit
-      INTEGER passed_test_cases
-      INTEGER total_test_cases
-      UUID failed_test_case_id FK
-      TIMESTAMP created_at
-      TIMESTAMP updated_at
+      UUID id
+      UUID user_id
+      UUID problem_id
+      STRING language_col
+      STRING code
+      STRING status
+      STRING verdict
+      INT execution_time_ms
+      FLOAT memory_used_mb
+      STRING stdout_snippet
+      STRING stderr_snippet
+      STRING actual_output
+      STRING expected_output
+      BOOL is_submit
+      INT passed_test_cases
+      INT total_test_cases
+      UUID failed_test_case_id
+      DATETIME created_at
+      DATETIME updated_at
     }
 
     TEST_CASES {
-      UUID id PK
-      UUID problem_id FK
-      TEXT input_data
-      TEXT expected_output
-      BOOLEAN is_sample
-      INTEGER ordering
-      TIMESTAMP created_at
+      UUID id
+      UUID problem_id
+      STRING input_data
+      STRING expected_output
+      BOOL is_sample
+      INT ordering
+      DATETIME created_at
     }
 
     TOPICS {
-      INTEGER id PK
-      VARCHAR name UK
-      VARCHAR slug UK
+      INT id
+      STRING name
+      STRING slug
     }
 
     USERS {
-      UUID id PK
-      TEXT email UK
-      TEXT name
-      TEXT password_hash
-      BOOLEAN is_verified
-      TEXT verification_token_hash
-      TIMESTAMP verification_token_expires_at
-      TEXT role
-      TIMESTAMP created_at
-      TIMESTAMP updated_at
+      UUID id
+      STRING email
+      STRING name
+      STRING password_hash
+      BOOL is_verified
+      STRING verification_token_hash
+      DATETIME verification_token_expires_at
+      STRING role
+      DATETIME created_at
+      DATETIME updated_at
     }
 
     PROBLEMS ||--o{ PROBLEM_LANGUAGE_CONFIGS : problem_id
