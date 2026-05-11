@@ -72,22 +72,22 @@ CodeSpace is a production-ready online judge and code execution platform. Users 
 
 #### Successful Code Submission
 <video controls width="640">
-  <source src="docs/videos/accepted_execution_flow.mp4" type="video/mp4">
-  Your browser does not support the video tag.
+   <source src="https://himanshu6001.github.io/remote-code-execution-engine/videos/accepted_execution_flow.mp4" type="video/mp4">
+   Your browser does not support the video tag.
 </video>
 
 
 #### Error Cases 
 <video controls width="640">
-  <source src="docs/videos/wrong_execution_flow.mp4" type="video/mp4">
-  Your browser does not support the video tag.
+   <source src="https://himanshu6001.github.io/remote-code-execution-engine/videos/wrong_execution_flow.mp4" type="video/mp4">
+   Your browser does not support the video tag.
 </video>
 
 
 #### AI Feature
 <video controls width="640">
-  <source src="docs/videos/ai_usage_flow.mp4" type="video/mp4">
-  Your browser does not support the video tag.
+   <source src="https://himanshu6001.github.io/remote-code-execution-engine/videos/ai_usage_flow.mp4" type="video/mp4">
+   Your browser does not support the video tag.
 </video>
 
 
