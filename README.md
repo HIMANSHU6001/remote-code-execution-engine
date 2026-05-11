@@ -28,20 +28,16 @@ CodeSpace is a production-ready online judge and code execution platform. Users 
 
 ---
 
-## 🎬 Demo
+## 🎬 Demo Videos
 
-<table align="center">
-  <tr>
-    <th>✅ Successful Submission</th>
-    <th>❌ Error Cases</th>
-    <th>🤖 AI Feature</th>
-  </tr>
-  <tr>
-    <td><video src="https://github.com/user-attachments/assets/a2b43e1f-7116-49c4-bc0d-bc359b25a087" controls width="280"></video></td>
-    <td><video src="https://github.com/user-attachments/assets/6de22223-7c35-4cb8-9082-ae2a0e089fc1" controls width="280"></video></td>
-    <td><video src="https://github.com/user-attachments/assets/6a45c8fd-eefd-4436-bc31-94ffe28f8304" controls width="280"></video></td>
-  </tr>
-</table>
+### Successful Submission
+<video src="https://github.com/user-attachments/assets/a2b43e1f-7116-49c4-bc0d-bc359b25a087" controls width="640"></video>
+
+### Error Cases
+<video src="https://github.com/user-attachments/assets/6de22223-7c35-4cb8-9082-ae2a0e089fc1" controls width="640"></video>
+
+### AI Feature
+<video src="https://github.com/user-attachments/assets/6a45c8fd-eefd-4436-bc31-94ffe28f8304" controls width="640"></video>
 
 ---
 
