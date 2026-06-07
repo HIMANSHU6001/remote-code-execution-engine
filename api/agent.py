@@ -7,6 +7,7 @@ from agents import (
     input_guardrail, 
     set_tracing_disabled, 
     Runner,
+    ModelSettings,
 )
 from openai import AsyncOpenAI
 from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
@@ -68,6 +69,7 @@ agent = Agent(
     name="CodingTutor",
     instructions=CODING_TUTOR_INSTRUCTIONS,
     model=make_model(openrouter_model),
+    model_settings=ModelSettings(parallel_tool_calls=False),
     input_guardrails=[guardrail],
     mcp_servers=[server]
 )
