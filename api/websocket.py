@@ -215,6 +215,12 @@ async def ws_analyze(websocket: WebSocket):
         print(f"Error in WS loop: {str(e)}")
         import traceback
         traceback.print_exc()
+        with contextlib.suppress(Exception):
+            await websocket.send_json({
+                "t": "error", 
+                "message": "An unexpected server error occurred during analysis."
+            })
+            await websocket.send_json({"t": "sys", "action": "GENERATION_COMPLETE"})
     finally:
         with contextlib.suppress(Exception):
             await pubsub.close()

@@ -62,6 +62,13 @@ export function AICodingPanel({ code, editor, onClose, latestJobId }: AICodingPa
               role: "assistant", 
               content: `**Input Blocked**: ${data.message || "Request ignored by guardrail."}` 
             });
+          } else if (data.t === "error") {
+            setIsAnalyzing(false);
+            setStreamingText("");
+            addMessage({ 
+              role: "assistant", 
+              content: `**Error**: ${data.message || "An unexpected error occurred."}` 
+            });
           } else if (data.t === "sys" && data.action === "GENERATION_COMPLETE") {
             setIsAnalyzing(false);
             if (fullResponseRef.current) {
@@ -77,6 +84,8 @@ export function AICodingPanel({ code, editor, onClose, latestJobId }: AICodingPa
 
       socket.onclose = (event) => {
         wsRef.current = null;
+        setIsAnalyzing(false);
+        setStreamingText("");
         if (!event.wasClean) {
           console.warn(`WebSocket closed unexpectedly: ${event.code} ${event.reason}`);
           reconnectTimeout = setTimeout(connect, 2000);
