@@ -54,9 +54,9 @@ CodeSpace is a production-ready online judge and code execution platform. Users 
 
 1. **Clone & Setup Backend**
 ```bash
-   python -m venv .venv
+   uv venv
    source .venv/bin/activate  # Windows: .venv\Scripts\activate
-   pip install -e ".[dev]"
+   uv pip install -e ".[dev]"
 ```
 
 2. **Setup Frontend**

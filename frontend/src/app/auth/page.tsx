@@ -100,11 +100,6 @@ export default function AuthPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center ml-1">
                     <label className="text-sm font-medium text-zinc-400">Password</label>
-                    {mode === "signin" && (
-                      <button type="button" className="text-xs text-emerald-500 hover:text-emerald-400">
-                        Forgot?
-                      </button>
-                    )}
                   </div>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-zinc-600" />
@@ -146,8 +141,8 @@ export default function AuthPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={async () => {
                   setError(null);
                   setIsLoading(true);
@@ -168,8 +163,8 @@ export default function AuthPage() {
                 </svg>
                 GitHub
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={async () => {
                   setError(null);
                   setIsLoading(true);

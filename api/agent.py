@@ -8,15 +8,18 @@ from agents import (
     set_tracing_disabled, 
     Runner,
     ModelSettings,
+    set_trace_processors
 )
+import httpx
 from openai import AsyncOpenAI
 from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
 from agents.mcp import MCPServerSse
 import os
 from pydantic import BaseModel
 from api.prompts import GUARDRAIL_INSTRUCTIONS, CODING_TUTOR_INSTRUCTIONS
+from langsmith.integrations.openai_agents_sdk import OpenAIAgentsTracingProcessor
 
-set_tracing_disabled(True)
+set_trace_processors([OpenAIAgentsTracingProcessor()])
 
 openrouter_api_key = os.getenv("OPEN_ROUTER_API_KEY")
 openrouter_base_url = os.getenv("OPEN_ROUTER_BASE_URL")
@@ -32,7 +35,7 @@ set_default_openai_client(client)
 def make_model(model_name: str) -> OpenAIChatCompletionsModel:
     return OpenAIChatCompletionsModel(
         model=model_name,
-        openai_client=client,
+        openai_client=client
     )
 
 class GuardrailOutput(BaseModel):
@@ -59,10 +62,15 @@ async def guardrail(
 
 mcp_url = os.getenv("MCP_SERVER_URL")
 
+custom_http_client = httpx.AsyncClient(
+    timeout=httpx.Timeout(60.0, connect=10.0)
+)
+
 server = MCPServerSse(
     name="RCE_Code_Editor_Assistant_Tools",
-    params={"url": mcp_url},
+    params={"url": mcp_url, "timeout": 60.0},
     cache_tools_list=True,
+    client_session_timeout_seconds=60.0
 )
 
 agent = Agent(

@@ -1,11 +1,11 @@
 """WS /ws/{job_id} — real-time result delivery via Redis Pub/Sub."""
 
 from __future__ import annotations
-
 import asyncio
 import contextlib
 import json
 import uuid
+import redis
 from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -56,13 +56,29 @@ async def ws_analyze(websocket: WebSocket):
                 break
             
             s_id = init_data.get("session_id", "unknown")
+            
             history = init_data.get("history", [])
+            raw_history = init_data.get("history", [])
             code = init_data.get("code", "")
             current_hash = init_data.get("hash", "")
             run_id = init_data.get("run_id")
 
             print(f"Processing request for session: {s_id}")
 
+            sanitized_history = []
+            for i, msg in enumerate(raw_history):
+                # If we find an assistant message that attempted to call a tool...
+                if msg.get("role") == "assistant" and msg.get("tool_calls"):
+                    # Check if the immediately following message is the tool's response
+                    if i + 1 < len(raw_history) and raw_history[i+1].get("role") == "tool":
+                        sanitized_history.append(msg)
+                    else:
+                        # Orphaned tool call detected! The WS dropped before the tool finished.
+                        # Drop this message to prevent the OpenAI 400 error.
+                        print(f"Dropped orphaned tool call for session {s_id}")
+                        continue 
+                else:
+                    sanitized_history.append(msg)
             # Add line numbers to the code block for accuracy
             numbered_lines = [f"{i+1}: {l}" for i, l in enumerate(code.split('\n'))]
             numbered_code = "\n".join(numbered_lines)
@@ -82,7 +98,8 @@ async def ws_analyze(websocket: WebSocket):
                         "DO NOT include any of these technical values (session_id, hash, run_id, etc.) in your text response to the user."
                     )
                 }
-            ] + history
+            ] + sanitized_history
+
 
             # Subscribe to the event bus
             await pubsub.subscribe(f"session:{s_id}")
@@ -154,6 +171,7 @@ async def ws_analyze(websocket: WebSocket):
                                             buffer = buffer[-8:]
 
                 except InputGuardrailTripwireTriggered as e:
+                    # (You can remove the timing print from inside here)
                     # Some runner implementations raise an exception when the guardrail trips.
                     reason = "Your input was blocked because it isn't a coding-related question."
                     
@@ -181,11 +199,19 @@ async def ws_analyze(websocket: WebSocket):
                         sent_any_text = True
 
             async def stream_redis_events():
-                async for message in pubsub.listen():
-                    if message["type"] == "message":
-                        event_data = json.loads(message["data"])
-                        if not await safe_send(event_data):
-                            return
+                while True:
+                    try:
+                        async for message in pubsub.listen():
+                            if message["type"] == "message":
+                                event_data = json.loads(message["data"])
+                                if not await safe_send(event_data):
+                                    return
+                    except (asyncio.TimeoutError, redis.exceptions.TimeoutError):
+                        # Suppress Redis read timeouts if channel is idle, just continue listening
+                        continue
+                    except Exception:
+                        # For connection drops or other errors, exit
+                        break
 
             # Multiplexing this specific interaction
             task_a = asyncio.create_task(stream_llm(s_id, current_hash, run_id, history_with_context))
@@ -335,5 +361,3 @@ async def websocket_endpoint(ws: WebSocket, job_id: uuid.UUID, token: str) -> No
         active_connections.pop(job_id_str, None)
         with contextlib.suppress(Exception):
             await ws.close(code=1000)
-
-
