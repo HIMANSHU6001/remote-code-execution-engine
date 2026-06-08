@@ -58,16 +58,16 @@ export function AICodingPanel({ code, editor, onClose, latestJobId }: AICodingPa
             }
           } else if (data.t === "guardrail") {
             setIsAnalyzing(false);
-            addMessage({ 
-              role: "assistant", 
-              content: `**Input Blocked**: ${data.message || "Request ignored by guardrail."}` 
+            addMessage({
+              role: "assistant",
+              content: `**Input Blocked**: ${data.message || "Request ignored by guardrail."}`
             });
           } else if (data.t === "error") {
             setIsAnalyzing(false);
             setStreamingText("");
-            addMessage({ 
-              role: "assistant", 
-              content: `**Error**: ${data.message || "An unexpected error occurred."}` 
+            addMessage({
+              role: "assistant",
+              content: `**Error**: ${data.message || "An unexpected error occurred."}`
             });
           } else if (data.t === "sys" && data.action === "GENERATION_COMPLETE") {
             setIsAnalyzing(false);
@@ -161,12 +161,12 @@ export function AICodingPanel({ code, editor, onClose, latestJobId }: AICodingPa
   const handleAnalyze = async (userPrompt?: string) => {
     const currentHash = await generateHash(code);
     currentHashRef.current = currentHash;
-    const history = useChatStore.getState().messages;
-
     const promptToSend = userPrompt || "Please analyze my code.";
     if (!userPrompt) {
       addMessage({ role: "user", content: promptToSend });
     }
+
+    const history = useChatStore.getState().messages;
 
     setIsAnalyzing(true);
     setStreamingText("");
@@ -178,7 +178,7 @@ export function AICodingPanel({ code, editor, onClose, latestJobId }: AICodingPa
         hash: currentHash,
         code: code,
         run_id: latestJobId,
-        history: [...history, { role: "user", content: promptToSend }]
+        history: history
       }));
     } else {
       console.error("WebSocket is not connected");

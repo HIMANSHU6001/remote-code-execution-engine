@@ -45,7 +45,7 @@ class GuardrailOutput(BaseModel):
 guardrail_agent = Agent(
     name="GuardrailAgent",
     instructions=GUARDRAIL_INSTRUCTIONS,
-    model=make_model(openrouter_model),
+    model=make_model("openai/gpt-4o-mini"),
     output_type=GuardrailOutput,
 )
 
@@ -53,7 +53,17 @@ guardrail_agent = Agent(
 async def guardrail( 
     ctx: RunContextWrapper[None], agent: Agent, input: str | list[TResponseInputItem]
 ) -> GuardrailFunctionOutput:
-    result = await Runner.run(guardrail_agent, input, context=ctx.context)
+    
+    filtered_input = input
+    if isinstance(input, list):
+        filtered_input = []
+        for msg in input:
+            role = msg.role if hasattr(msg, 'role') else msg.get('role')
+            
+            if role != 'system':
+                filtered_input.append(msg)
+
+    result = await Runner.run(guardrail_agent, filtered_input, context=ctx.context)
 
     return GuardrailFunctionOutput(
         output_info=result.final_output.reasoning, 
