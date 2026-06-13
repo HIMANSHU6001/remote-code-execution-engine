@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
 import {
   loginApiAuthLoginPost,
   signupApiAuthSignupPost,
@@ -45,6 +46,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  const logout = () => {
+    Cookies.remove("auth_token");
+    setToken(null);
+    client.setConfig({
+      headers: {
+        Authorization: undefined,
+      },
+    });
+    router.push("/auth");
+  };
 
   useEffect(() => {
     const savedToken = Cookies.get("auth_token");
@@ -57,6 +70,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
     }
     setLoading(false);
+
+    // Register interceptor to handle token expiration (401 errors)
+    const interceptorId = client.interceptors.error.use(async (error, response) => {
+      if (response && response.status === 401) {
+        logout();
+      }
+      return error;
+    });
+
+    return () => {
+      client.interceptors.error.eject(interceptorId);
+    };
   }, []);
 
   const login = async (data: LoginRequest) => {
@@ -116,15 +141,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loginWithGoogle = () => handleSocialLogin(googleProvider);
   const loginWithGithub = () => handleSocialLogin(githubProvider);
 
-  const logout = () => {
-    Cookies.remove("auth_token");
-    setToken(null);
-    client.setConfig({
-      headers: {
-        Authorization: undefined,
-      },
-    });
-  };
+  // logout was moved above useEffect to be accessible in interceptors
 
   return (
     <AuthContext.Provider value={{
