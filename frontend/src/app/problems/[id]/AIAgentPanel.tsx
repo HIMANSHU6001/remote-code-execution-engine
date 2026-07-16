@@ -172,7 +172,7 @@ export function AICodingPanel({ code, editor, onClose, latestJobId }: AICodingPa
     fullResponseRef.current = "";
 
     try {
-      const response = await fetch('/api/lamatic', {
+      const response = await fetch('/lamatic-proxy', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
