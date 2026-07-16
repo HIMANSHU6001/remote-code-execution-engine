@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         Authorization: undefined,
       },
     });
-    router.push("/auth");
+    router.push("/auth/signin");
   };
 
   useEffect(() => {

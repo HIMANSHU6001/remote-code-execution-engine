@@ -37,7 +37,7 @@ function VerifyEmailContent() {
           setMessage("Email verified successfully! You can now sign in.");
           toast.success("Email verified!");
           // Optional: redirect after some delay
-          setTimeout(() => router.push("/auth"), 3000);
+          setTimeout(() => router.push("/auth/signin"), 3000);
         }
       } catch (err) {
         setStatus("error");
@@ -81,7 +81,7 @@ function VerifyEmailContent() {
 
           {status === "success" && (
             <Link 
-              href="/auth" 
+              href="/auth/signin" 
               className={cn(buttonVariants({ className: "w-full bg-emerald-600 hover:bg-emerald-700 text-white h-11 rounded-xl font-bold mt-4" }))}
             >
               Sign In Now
@@ -91,7 +91,7 @@ function VerifyEmailContent() {
 
           {status === "error" && (
             <Link 
-              href="/auth" 
+              href="/auth/signin" 
               className={cn(buttonVariants({ variant: "outline", className: "w-full bg-transparent border-zinc-800 hover:bg-zinc-900 rounded-xl h-11 text-zinc-300 mt-4" }))}
             >
               Back to Sign In

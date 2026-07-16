@@ -65,9 +65,9 @@ function ProblemsContent() {
   }, [difficultyFilter, topicParam]);
 
   const difficultyColors = {
-    easy: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
+    easy: "text-brand-500 bg-brand-500/10 border-brand-500/20",
     medium: "text-amber-500 bg-amber-500/10 border-amber-500/20",
-    hard: "text-rose-500 bg-rose-500/10 border-rose-500/20",
+    hard: "text-destructive bg-destructive/10 border-destructive/20",
   };
 
   const filteredProblems = (problems || []).filter(p =>
@@ -75,138 +75,173 @@ function ProblemsContent() {
   );
 
   return (
-    <>
+    <div className="flex flex-col h-screen w-full">
       <Navbar />
-      <div className="container mx-auto px-4 py-12 max-w-6xl">
-      {/* Hero Section */}
-      <div className="mb-12">
-        <h1 className="text-4xl font-bold text-white mb-4 tracking-tight">Pick Your Challenge</h1>
-        <p className="text-zinc-500 text-lg max-w-2xl">
-          Sharpen your coding skills with our curated collection of problems.
-          From algorithmic fundamentals to complex system designs.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Filters Sidebar */}
-        <div className="space-y-8">
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-              <Filter className="h-4 w-4" />
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar */}
+        <aside className="w-[280px] shrink-0 border-r-2 border-border-dark flex-col overflow-y-auto hidden md:block" style={{ background: "var(--navbar-bg)" }}>
+          {/* Difficulty Section */}
+          <div className="p-5 border-b border-border-dark">
+            <h3 className="text-[15px] font-medium text-text-primary mb-4 flex items-center gap-2">
+              <Filter className="h-4 w-4 text-text-muted" />
               Difficulty
             </h3>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-0.5">
               {["all", "easy", "medium", "hard"].map((d) => (
                 <button
                   key={d}
                   onClick={() => setDifficultyFilter(d as any)}
                   className={cn(
-                    "flex items-center justify-between px-4 py-2.5 rounded-xl border transition-all text-sm font-medium",
+                    "cursor-pointer flex items-center justify-between px-3 py-1 rounded-lg transition-all text-[13px] font-[430] tracking-[-0.26px] hover-langfuse",
                     difficultyFilter === d
-                      ? "bg-emerald-600/10 border-emerald-500/50 text-emerald-500"
-                      : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-300"
+                      ? "text-brand-500"
+                      : "text-text-tertiary hover:text-text-secondary"
                   )}
                 >
                   <span className="capitalize">{d}</span>
-                  {difficultyFilter === d && <CheckCircle2 className="h-4 w-4" />}
+                  {difficultyFilter === d && <CheckCircle2 className="h-3.5 w-3.5" />}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-              <Zap className="h-4 w-4" />
+          {/* Topics Section */}
+          <div className="p-5 border-b border-border-dark">
+            <h3 className="text-[15px] font-medium text-text-primary mb-4 flex items-center gap-2">
+              <Zap className="h-4 w-4 text-text-muted" />
               Topics
               {topicParam && (
-                <Link href="/problems" className="ml-auto text-[10px] text-emerald-500 hover:underline">
+                <Link href="/problems" className="ml-auto text-[10px] text-brand-500 hover:underline font-normal">
                   Clear
                 </Link>
               )}
             </h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-0.5">
               {topics.map((t) => (
                 <Link
                   key={t.id}
                   href={`/problems?topic=${t.slug}`}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg border text-xs font-medium transition-all",
+                    "flex items-center justify-between px-3 py-1 rounded-lg transition-all text-[13px] font-[430] tracking-[-0.26px] hover-langfuse",
                     topicParam === t.slug
-                      ? "bg-emerald-600/10 border-emerald-500/50 text-emerald-500"
-                      : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-300"
+                      ? "text-brand-500"
+                      : "text-text-tertiary hover:text-text-secondary"
                   )}
                 >
-                  {t.name}
+                  <span>{t.name}</span>
                 </Link>
               ))}
             </div>
           </div>
-        </div>
+        </aside>
 
-        {/* Problems List */}
-        <div className="lg:col-span-3 space-y-6">
-          {/* Search Bar */}
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-600 group-focus-within:text-emerald-500 transition-colors" />
-            <Input
-              placeholder="Search problems by name or ID..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-zinc-900 border-zinc-800 pl-12 h-14 rounded-2xl focus:ring-emerald-500/50 focus:border-emerald-500 transition-all text-zinc-300"
-            />
-          </div>
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto p-6 md:p-10 bg-grid">
+          <div className="max-w-4xl mx-auto space-y-8 bg-background">
+            {/* Hero Section */}
+            <div className="relative mb-12 border border-border-primary/50  z-0">
 
-          <div className="bg-[#0f0f0f] border border-zinc-800/50 rounded-3xl overflow-hidden shadow-xl">
-            {isLoading ? (
-              <div className="p-12 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="h-10 w-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
-                  <p className="text-zinc-500 text-sm font-medium">Loading challenges...</p>
+              {/* Corner markers */}
+              <div className="absolute -top-px -left-px w-2.5 h-2.5 border-t border-l border-border-dark" />
+              <div className="absolute -top-px -right-px w-2.5 h-2.5 border-t border-r border-border-dark" />
+              <div className="absolute -bottom-px -left-px w-2.5 h-2.5 border-b border-l border-border-dark" />
+              <div className="absolute -bottom-px -right-px w-2.5 h-2.5 border-b border-r border-border-dark" />
+
+              {/* Main Content */}
+              <div className="pt-10 pb-10 px-6 sm:px-12 flex flex-col items-center justify-center text-center">
+                <h1 className="text-5xl sm:text-[64px] font-medium tracking-tight text-text-primary mb-6 flex flex-col gap-2 items-center leading-[1.1]">
+                  <span className="relative inline-block px-3 z-0">
+                    <span className="absolute inset-0 h-12 top-[20%] bottom-[10%] bg-brand-200 dark:bg-transparent rounded-sm z-[-1]" />
+                    <span className="text-text-primary">Pick Your Challenge</span>
+                  </span>
+                </h1>
+
+                <p className="max-w-[700px] text-[14px] font-[430] text-text-secondary leading-relaxed">
+                  Sharpen your coding skills with our curated collection of problems.
+                  From algorithmic fundamentals to complex system designs.
+                </p>
+              </div>
+
+              {/* Separator with T-joints */}
+              <div className="relative w-full h-px bg-border-primary/50">
+                {/* Left T-joint */}
+                <div className="absolute -left-px top-1/2 -translate-y-1/2 flex items-center">
+                  <div className="w-px h-3 bg-border-dark" />
+                  <div className="w-2 h-px bg-border-dark" />
+                </div>
+                {/* Right T-joint */}
+                <div className="absolute -right-px top-1/2 -translate-y-1/2 flex items-center">
+                  <div className="w-2 h-px bg-border-dark" />
+                  <div className="w-px h-3 bg-border-dark" />
                 </div>
               </div>
-            ) : filteredProblems.length > 0 ? (
-              <div className="divide-y divide-zinc-800/50">
-                {filteredProblems.map((problem) => (
-                  <Link
-                    key={problem.id}
-                    href={`/problems/${problem.id}`}
-                    className="flex items-center justify-between p-5 hover:bg-zinc-800/30 transition-all group"
-                  >
-                    <div className="flex items-center gap-6">
-                      <div>
-                        <h4 className="text-white font-semibold group-hover:text-emerald-400 transition-colors">
-                          {problem.title}
-                        </h4>
-                        <div className="flex gap-3 mt-1.5">
-                          {problem.topics?.map(topic => (
-                            <span key={topic.id} className="text-[10px] text-zinc-500 font-medium">#{topic.name}</span>
-                          ))}
-                        </div>
+
+              {/* Problems List Area */}
+              <div className="space-y-6 px-6 sm:px-12 pb-12 mt-8 w-full">
+                {/* Search Bar */}
+                <div className="relative group">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-text-muted group-focus-within:text-brand-500 transition-colors" />
+                  <Input
+                    placeholder="Search problems by name or ID..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="bg-surface-secondary border-border-primary pl-12 h-14 rounded-2xl focus:ring-brand-500/50 focus:border-brand-500 transition-all text-text-secondary"
+                  />
+                </div>
+
+                <div className="relative">
+                  {isLoading ? (
+                    <div className="p-12 flex items-center justify-center">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="h-10 w-10 border-2 border-brand-500/20 border-t-brand-500 rounded-full animate-spin" />
+                        <p className="text-text-muted text-sm font-medium">Loading challenges...</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-6">
-                      <div className={cn(
-                        "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border",
-                        difficultyColors[problem.difficulty as keyof typeof difficultyColors]
-                      )}>
-                        {problem.difficulty}
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-zinc-800 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
+                  ) : filteredProblems.length > 0 ? (
+                    <div className="flex flex-col gap-1">
+                      {filteredProblems.map((problem) => (
+                        <Link
+                          key={problem.id}
+                          href={`/problems/${problem.id}`}
+                          className="flex items-center justify-between p-5 transition-all group hover-langfuse"
+                        >
+                          <div className="flex items-center gap-6">
+                            <div>
+                              <h4 className="text-text-primary font-semibold group-hover:text-brand-400 transition-colors">
+                                {problem.title}
+                              </h4>
+                              <div className="flex gap-3 mt-1.5">
+                                {problem.topics?.map(topic => (
+                                  <span key={topic.id} className="text-[10px] text-text-muted font-medium">#{topic.name}</span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-6">
+                            <div className={cn(
+                              "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border",
+                              difficultyColors[problem.difficulty as keyof typeof difficultyColors]
+                            )}>
+                              {problem.difficulty}
+                            </div>
+                            <ChevronRight className="h-5 w-5 text-text-muted group-hover:text-brand-500 group-hover:translate-x-1 transition-all" />
+                          </div>
+                        </Link>
+                      ))}
                     </div>
-                  </Link>
-                ))}
+                  ) : (
+                    <div className="p-20 text-center">
+                      <BarChart3 className="h-12 w-12 text-text-muted mx-auto mb-4" />
+                      <h3 className="text-lg font-bold text-text-primary mb-1">No problems found</h3>
+                      <p className="text-text-tertiary">Try adjusting your filters or search query.</p>
+                    </div>
+                  )}
+                </div>
               </div>
-            ) : (
-              <div className="p-20 text-center">
-                <BarChart3 className="h-12 w-12 text-zinc-800 mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-white mb-1">No problems found</h3>
-                <p className="text-zinc-500">Try adjusting your filters or search query.</p>
-              </div>
-            )}
+            </div>
           </div>
-        </div>
+        </main>
       </div>
-      </div>
-    </>
+    </div>
   );
 }

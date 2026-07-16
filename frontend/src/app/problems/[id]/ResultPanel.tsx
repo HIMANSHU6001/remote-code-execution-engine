@@ -29,10 +29,10 @@ function StatBadge({
   return (
     <div
       className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg"
-      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+      style={{ background: "var(--tag-bg)", border: "1px solid var(--tag-border)" }}
     >
-      <Icon className="h-3.5 w-3.5 text-zinc-600" />
-      <span className="text-xs font-mono text-zinc-400">{value}</span>
+      <Icon className="h-3.5 w-3.5 text-text-muted" />
+      <span className="text-xs font-mono text-text-tertiary">{value}</span>
     </div>
   );
 }
@@ -46,16 +46,16 @@ function CodeBlock({ label, content, variant = "default" }: {
     <div className="space-y-1.5">
       <p
         className="text-[10px] font-bold uppercase tracking-[0.12em]"
-        style={{ color: variant === "error" ? "#f43f5e" : "#52525b" }}
+        style={{ color: variant === "error" ? "#f43f5e" : "var(--text-muted)" }}
       >
         {label}
       </p>
       <pre
         className="p-3 rounded-xl font-mono text-xs leading-relaxed overflow-x-auto min-h-[52px]"
         style={{
-          background: variant === "error" ? "rgba(244,63,94,0.05)" : "#111113",
-          border: `1px solid ${variant === "error" ? "rgba(244,63,94,0.18)" : "rgba(255,255,255,0.07)"}`,
-          color: variant === "error" ? "#fda4af" : "#a1a1aa",
+          background: variant === "error" ? "rgba(244,63,94,0.05)" : "var(--code-bg)",
+          border: `1px solid ${variant === "error" ? "rgba(244,63,94,0.18)" : "var(--code-border)"}`,
+          color: variant === "error" ? "#fda4af" : "var(--text-secondary)",
         }}
       >
         {content || "—"}
@@ -85,8 +85,8 @@ export function ResultPanel({
           <Loader2 className="h-8 w-8 text-emerald-400 animate-spin relative z-10" />
         </div>
         <div className="text-center space-y-1">
-          <p className="text-sm font-medium text-zinc-400">Running your code</p>
-          <p className="text-xs text-zinc-600">Executing on secure engine…</p>
+          <p className="text-sm font-medium text-text-tertiary">Running your code</p>
+          <p className="text-xs text-text-muted">Executing on secure engine…</p>
         </div>
       </div>
     );
@@ -95,8 +95,8 @@ export function ResultPanel({
   if (!submissionResult) {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-3 py-12">
-        <Terminal className="h-8 w-8 text-zinc-700" />
-        <p className="text-sm text-zinc-600">Run your code to see results</p>
+        <Terminal className="h-8 w-8 text-text-muted" />
+        <p className="text-sm text-text-muted">Run your code to see results</p>
       </div>
     );
   }
@@ -149,8 +149,8 @@ export function ResultPanel({
           <div
             className="flex gap-1.5 flex-wrap p-1.5 rounded-xl"
             style={{
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.06)",
+              background: "var(--hover-bg)",
+              border: "1px solid var(--border-subtle)",
             }}
           >
             {resultCaseDetails.map((tc, i) => {
@@ -162,7 +162,7 @@ export function ResultPanel({
                 <button
                   key={tc.test_case_id || i}
                   onClick={() => onCaseChange(i)}
-                  className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-semibold transition-all"
+                  className="hover-langfuse flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-semibold transition-all"
                   style={
                     isActive
                       ? {
@@ -171,9 +171,9 @@ export function ResultPanel({
                         color: "#34d399",
                       }
                       : {
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(255,255,255,0.07)",
-                        color: "#71717a",
+                        background: "var(--tag-bg)",
+                        border: "1px solid var(--tag-border)",
+                        color: "var(--text-tertiary)",
                       }
                   }
                 >

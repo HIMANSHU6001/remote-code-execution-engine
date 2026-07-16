@@ -6,8 +6,8 @@
 
 /* System font fallbacks */
 :root {
-  --font-poppins: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "Monaco", "Menlo", "Ubuntu Mono", "JetBrains Mono", monospace;
+  --font-poppins: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "Monaco", "Menlo", "Ubuntu Mono", monospace;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -16,9 +16,12 @@
 }
 
 /* Hide scrollbar for IE, Edge and Firefox */
-html, body {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+html,
+body {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 @theme inline {
@@ -61,7 +64,7 @@ html, body {
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-  
+
   /* Custom green theme colors */
   --color-brand-50: #f0fdf4;
   --color-brand-100: #dcfce7;
@@ -74,30 +77,87 @@ html, body {
   --color-brand-800: #166534;
   --color-brand-900: #14532d;
   --color-brand-950: #052e16;
+
+  /* Semantic surface colors */
+  --color-surface-primary: var(--surface-primary);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-surface-tertiary: var(--surface-tertiary);
+  --color-surface-elevated: var(--surface-elevated);
+
+  /* Semantic text colors */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-muted: var(--text-muted);
+
+  /* Semantic border colors */
+  --color-border-primary: var(--border-primary);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-dark: var(--border-dark);
 }
 
+/* ===== LIGHT THEME (default) ===== */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: #16a34a;
+  --background: #f8f8f7;
+  --foreground: #171717;
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --primary: #171717;
   --primary-foreground: #ffffff;
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: #22c55e;
-  --radius: 0.75rem;
+  --secondary: #e5e5e5;
+  --secondary-foreground: #171717;
+  --muted: #f4f4f5;
+  --muted-foreground: #737373;
+  --accent: #f4f4f5;
+  --accent-foreground: #171717;
+  --destructive: #ef4444;
+  --border: #e4e4e1;
+  --input: #e4e4e1;
+  --ring: #171717;
+  --radius: 0px;
+  /* Sharp edges */
+
+  /* Semantic surfaces */
+  --surface-primary: #f8f8f7;
+  --surface-secondary: #edede8;
+  /* Sidebar background color */
+  --surface-tertiary: #e4e4df;
+  --surface-elevated: #ffffff;
+
+  /* Semantic text */
+  --text-primary: #171717;
+  --text-secondary: #525252;
+  --text-tertiary: #737373;
+  --text-muted: #a3a3a3;
+
+  /* Semantic borders */
+  --border-primary: #e4e4e1;
+  --border-subtle: #d6d6d2;
+  --border-dark: #a3a39e;
+  /* Slightly darker to contrast with #edede8 */
+
+  /* Functional */
+  --hover-bg: rgba(0, 0, 0, 0.04);
+  --code-bg: #f4f4f5;
+  --code-border: #e4e4e1;
+  --code-text: #171717;
+  --toast-bg: #ffffff;
+  --toast-color: #171717;
+  --toast-border: #e4e4e1;
+  --navbar-bg: #edede8;
+  /* Navbar background color */
+  --panel-header-bg: #edede8;
+  /* Panel headers background color */
+  --panel-header-tint: rgba(0, 0, 0, 0.02);
+  --divider: rgba(0, 0, 0, 0.06);
+  --tag-bg: rgba(0, 0, 0, 0.04);
+  --tag-border: rgba(0, 0, 0, 0.08);
+  --resizable-handle: #e4e4e1;
 }
 
+/* ===== DARK THEME ===== */
 .dark {
   --background: #000000;
   --foreground: #f8fafc;
@@ -126,34 +186,97 @@ html, body {
   --sidebar-accent-foreground: #f8fafc;
   --sidebar-border: #1a1a1a;
   --sidebar-ring: #22c55e;
+
+  /* Semantic surfaces */
+  --surface-primary: #0a0a0a;
+  --surface-secondary: #0c0c0e;
+  --surface-tertiary: #0f0f0f;
+  --surface-elevated: #111113;
+
+  /* Semantic text */
+  --text-primary: #f8fafc;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+  --text-muted: #52525b;
+
+  /* Semantic borders */
+
+  --border-primary: #1a1a1a;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-dark: #3f3f46;
+
+  /* Functional */
+  --hover-bg: rgba(255, 255, 255, 0.04);
+  --code-bg: #111113;
+  --code-border: rgba(255, 255, 255, 0.07);
+  --code-text: #d4d4d8;
+  --toast-bg: #18181b;
+  --toast-color: #ffffff;
+  --toast-border: #27272a;
+  --navbar-bg: rgba(15, 15, 15, 0.8);
+  --panel-header-bg: rgba(12, 12, 14, 0.9);
+  --panel-header-tint: rgba(255, 255, 255, 0.02);
+  --divider: rgba(255, 255, 255, 0.06);
+  --tag-bg: rgba(255, 255, 255, 0.04);
+  --tag-border: rgba(255, 255, 255, 0.08);
+  --resizable-handle: #0a0a0a;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
-    @apply bg-background text-foreground selection:bg-brand-500/30;
+    @apply bg-background text-foreground selection:bg-yellow-200/40;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+
   html {
     @apply font-sans scroll-smooth;
+  }
+
+  /* Langfuse inspired background pattern for light theme */
+  :root:not(.dark) body {
+    background-color: #f8f8f7;
+    background-image:
+      linear-gradient(to right, rgba(0, 0, 0, 0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.035) 1px, transparent 1px);
+    background-size: 20px 20px;
   }
 }
 
 @layer utilities {
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+
+  .dark .bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  }
+
   .glass {
     @apply bg-white/5 backdrop-blur-md border border-white/10;
   }
+
   .dark .glass {
     @apply bg-zinc-950/50 backdrop-blur-md border border-zinc-800/50;
   }
+
   .text-gradient {
     @apply bg-clip-text text-transparent bg-linear-to-r from-brand-400 to-emerald-500;
   }
+
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -162,12 +285,115 @@ html, body {
 
 /* Monaco Decorations */
 .monaco-line-error {
-  background-color: rgba(16, 185, 129, 0.2) !important; /* emerald-500/20 */
-  border-left: 4px solid #10b981 !important; /* emerald-500 */
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  /* emerald-500/20 */
+  border-left: 4px solid #10b981 !important;
+  /* emerald-500 */
 }
 
 .monaco-glyph-error {
   background-color: #10b981 !important;
   width: 5px !important;
   margin-left: 5px;
+}
+
+/* Theme toggle animation */
+.theme-toggle-icon {
+  transition: transform 0.3s ease, opacity 0.2s ease;
+}
+
+/* Decorative Corner Accents */
+.corner-accents {
+  position: relative;
+}
+
+.corner-accents::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  bottom: -1px;
+  pointer-events: none;
+  background:
+    linear-gradient(to right, var(--text-secondary) 100%, transparent 0%) top left / 7px 1.5px no-repeat,
+    linear-gradient(to bottom, var(--text-secondary) 100%, transparent 0%) top left / 1.5px 7px no-repeat,
+    linear-gradient(to left, var(--text-secondary) 100%, transparent 0%) top right / 7px 1.5px no-repeat,
+    linear-gradient(to bottom, var(--text-secondary) 100%, transparent 0%) top right / 1.5px 7px no-repeat,
+    linear-gradient(to right, var(--text-secondary) 100%, transparent 0%) bottom left / 7px 1.5px no-repeat,
+    linear-gradient(to top, var(--text-secondary) 100%, transparent 0%) bottom left / 1.5px 7px no-repeat,
+    linear-gradient(to left, var(--text-secondary) 100%, transparent 0%) bottom right / 7px 1.5px no-repeat,
+    linear-gradient(to top, var(--text-secondary) 100%, transparent 0%) bottom right / 1.5px 7px no-repeat;
+  z-index: 10;
+}
+
+
+/* Outer Button Corner Brackets */
+.corner-brackets {
+  position: relative;
+}
+
+.corner-brackets::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  pointer-events: none;
+  background:
+    linear-gradient(to right, var(--text-tertiary) 100%, transparent 0%) top left / 5px 1px no-repeat,
+    linear-gradient(to bottom, var(--text-tertiary) 100%, transparent 0%) top left / 1px 5px no-repeat,
+    linear-gradient(to left, var(--text-tertiary) 100%, transparent 0%) top right / 5px 1px no-repeat,
+    linear-gradient(to bottom, var(--text-tertiary) 100%, transparent 0%) top right / 1px 5px no-repeat,
+    linear-gradient(to right, var(--text-tertiary) 100%, transparent 0%) bottom left / 5px 1px no-repeat,
+    linear-gradient(to top, var(--text-tertiary) 100%, transparent 0%) bottom left / 1px 5px no-repeat,
+    linear-gradient(to left, var(--text-tertiary) 100%, transparent 0%) bottom right / 5px 1px no-repeat,
+    linear-gradient(to top, var(--text-tertiary) 100%, transparent 0%) bottom right / 1px 5px no-repeat;
+  z-index: 10;
+}
+
+/* Langfuse-style striped hover with corners */
+.hover-langfuse {
+  position: relative;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+
+.hover-langfuse:hover {
+  background: repeating-linear-gradient(-45deg,
+      transparent,
+      transparent 3px,
+      rgba(0, 0, 0, 0.03) 3px,
+      rgba(0, 0, 0, 0.03) 4px) !important;
+}
+
+
+.dark .hover-langfuse:hover {
+  background: repeating-linear-gradient(-45deg,
+      transparent,
+      transparent 3px,
+      rgba(255, 255, 255, 0.03) 3px,
+      rgba(255, 255, 255, 0.03) 4px) !important;
+}
+
+.hover-langfuse:hover::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  bottom: -1px;
+  pointer-events: none;
+  background:
+    linear-gradient(to right, var(--text-tertiary) 100%, transparent 0%) top left / 6px 1px no-repeat,
+    linear-gradient(to bottom, var(--text-tertiary) 100%, transparent 0%) top left / 1px 6px no-repeat,
+    linear-gradient(to left, var(--text-tertiary) 100%, transparent 0%) top right / 6px 1px no-repeat,
+    linear-gradient(to bottom, var(--text-tertiary) 100%, transparent 0%) top right / 1px 6px no-repeat,
+    linear-gradient(to right, var(--text-tertiary) 100%, transparent 0%) bottom left / 6px 1px no-repeat,
+    linear-gradient(to top, var(--text-tertiary) 100%, transparent 0%) bottom left / 1px 6px no-repeat,
+    linear-gradient(to left, var(--text-tertiary) 100%, transparent 0%) bottom right / 6px 1px no-repeat,
+    linear-gradient(to top, var(--text-tertiary) 100%, transparent 0%) bottom right / 1px 6px no-repeat;
+  z-index: 10;
 }

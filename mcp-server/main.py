@@ -14,11 +14,21 @@ redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
 async def emit_editor_annotation(line: int, message: str, hash: str = "", session_id: str = "") -> str:
     """Highlights a line in the user's IDE. Use this to point out bugs."""
     try:
+        import logging
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"TOOL TRIGGERED: emit_editor_annotation")
+        logger.info(f"Arguments: line={line}, message={message}, hash='{hash}', session_id='{session_id}'")
+        
         payload = {
             "t": "cmd",
             "v": {"line": line, "msg": message, "h": hash}
         }
-        await redis_client.publish(f"session:{session_id}", json.dumps(payload))
+        channel = f"session:{session_id}"
+        logger.info(f"Publishing to Redis channel: '{channel}' with payload: {payload}")
+        
+        await redis_client.publish(channel, json.dumps(payload))
         return f"Successfully highlighted line {line}"
     except Exception as e:
         # Catch all errors and return as a string so the SDK doesn't choke

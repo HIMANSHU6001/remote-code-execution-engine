@@ -19,18 +19,18 @@ const AuthModal = () => {
     <Dialog>
       <DialogTrigger 
         render={
-          <Button variant="outline" size="sm" className="border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300">
+          <Button variant="outline" size="sm" className="border-border-primary bg-surface-secondary hover:bg-[var(--hover-bg)] text-text-secondary">
             Sign In
           </Button>
         }
       />
 
-      <DialogContent className="sm:max-w-[425px] bg-[#121212] border-zinc-800 text-zinc-300">
+      <DialogContent className="sm:max-w-[425px] bg-surface-tertiary border-border-primary text-text-secondary">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-white">
+          <DialogTitle className="text-xl font-bold text-text-primary">
             {mode === "signin" ? "Sign In" : "Create Account"}
           </DialogTitle>
-          <DialogDescription className="text-zinc-500">
+          <DialogDescription className="text-text-muted">
             {mode === "signin" 
               ? "Welcome back to CodeSpace. Please enter your details." 
               : "Join CodeSpace to start solving problems and tracking your progress."}
@@ -38,19 +38,19 @@ const AuthModal = () => {
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-zinc-400">Email</label>
+            <label className="text-sm font-medium text-text-tertiary">Email</label>
             <Input 
               type="email" 
               placeholder="name@example.com" 
-              className="bg-black border-zinc-800 focus:ring-emerald-500"
+              className="bg-surface-secondary border-border-primary focus:ring-emerald-500"
             />
           </div>
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-zinc-400">Password</label>
+            <label className="text-sm font-medium text-text-tertiary">Password</label>
             <Input 
               type="password" 
               placeholder="••••••••" 
-              className="bg-black border-zinc-800 focus:ring-emerald-500"
+              className="bg-surface-secondary border-border-primary focus:ring-emerald-500"
             />
           </div>
           <Button className="bg-emerald-600 hover:bg-emerald-700 text-white mt-2">

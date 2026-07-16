@@ -1,7 +1,9 @@
 // ProblemHeader.tsx
-import { ChevronLeft, Sparkles, ChevronDown } from "lucide-react";
+import { ChevronLeft, Sparkles, ChevronDown, Sun, Moon } from "lucide-react";
 import type { ProblemWithDescription } from "./types";
 import Link from "next/link";
+import { useTheme } from "@/context/ThemeContext";
+import { cn } from "@/lib/utils";
 
 interface ProblemHeaderProps {
   problem: ProblemWithDescription;
@@ -25,20 +27,22 @@ export function ProblemHeader({
   isAIOpen,
   onToggleAI,
 }: ProblemHeaderProps) {
+  const { isDark, toggleTheme } = useTheme();
+
   return (
     <header
       className="flex items-center justify-between px-4 shrink-0 border-b"
       style={{
         height: "48px",
-        background: "#0a0a0c",
-        borderColor: "rgba(255,255,255,0.06)",
+        background: "var(--navbar-bg)",
+        borderColor: "var(--border-subtle)",
       }}
     >
       {/* Left: back + title */}
       <div className="flex items-center gap-3 min-w-0">
         <Link
           href="/problems"
-          className="flex items-center gap-1 text-zinc-600 hover:text-zinc-300 transition-colors shrink-0"
+          className="flex items-center gap-1 text-text-muted hover:text-text-secondary transition-colors shrink-0"
         >
           <ChevronLeft className="h-4 w-4" />
           <span className="text-xs font-medium hidden sm:block">Problems</span>
@@ -46,25 +50,49 @@ export function ProblemHeader({
 
         <div
           className="w-px h-4 shrink-0"
-          style={{ background: "rgba(255,255,255,0.08)" }}
+          style={{ background: "var(--divider)" }}
         />
 
-        <span className="text-sm font-semibold text-zinc-200 truncate">
+        <span className="text-sm font-semibold text-text-primary truncate">
           {problem.title}
         </span>
       </div>
 
-      {/* Right: language selector + AI toggle */}
+      {/* Right: theme toggle + language selector + AI toggle */}
       <div className="flex items-center gap-2 shrink-0">
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="hover-langfuse relative w-8 h-8 flex items-center justify-center rounded-lg border border-border-primary hover:bg-[var(--hover-bg)] transition-all duration-200"
+          aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+        >
+          <Sun
+            className={cn(
+              "h-4 w-4 absolute transition-all duration-300",
+              isDark
+                ? "rotate-0 scale-100 text-amber-400"
+                : "rotate-90 scale-0 text-amber-400"
+            )}
+          />
+          <Moon
+            className={cn(
+              "h-4 w-4 absolute transition-all duration-300",
+              isDark
+                ? "-rotate-90 scale-0 text-text-tertiary"
+                : "rotate-0 scale-100 text-text-tertiary"
+            )}
+          />
+        </button>
+
         {/* Language selector */}
         <div className="relative flex items-center">
           <select
             value={language}
             onChange={(e) => onLanguageChange(e.target.value)}
-            className="appearance-none pl-3 pr-7 py-1.5 rounded-lg text-[11px] font-semibold text-zinc-400 hover:text-zinc-300 transition-colors focus:outline-none cursor-pointer"
+            className="appearance-none pl-3 pr-7 py-1.5 rounded-lg text-[11px] font-semibold text-text-tertiary hover:text-text-secondary transition-colors focus:outline-none cursor-pointer"
             style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "var(--hover-bg)",
+              border: "1px solid var(--border-subtle)",
             }}
           >
             {LANGUAGES.map((l) => (
@@ -72,26 +100,24 @@ export function ProblemHeader({
             ))}
           </select>
           <ChevronDown
-            className="h-3 w-3 text-zinc-600 absolute right-2 pointer-events-none"
+            className="h-3 w-3 text-text-muted absolute right-2 pointer-events-none"
           />
         </div>
 
         {/* AI toggle */}
         <button
           onClick={onToggleAI}
-          className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-[11px] font-semibold transition-all"
+          className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-[11px] font-semibold transition-all hover-langfuse"
           style={
             isAIOpen
               ? {
-                background: "rgba(16,185,129,0.12)",
                 border: "1px solid rgba(16,185,129,0.25)",
                 color: "#34d399",
                 boxShadow: "0 0 12px rgba(16,185,129,0.1)",
               }
               : {
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                color: "#71717a",
+                border: "1px solid var(--border-subtle)",
+                color: "var(--text-tertiary)",
               }
           }
         >

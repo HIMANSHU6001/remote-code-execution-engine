@@ -135,14 +135,14 @@ export default function ProblemSolvingPage() {
 
   if (!problem) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-[#0a0a0a]">
+      <div className="h-screen w-full flex items-center justify-center bg-surface-primary">
         <Loader2 className="h-8 w-8 text-emerald-500 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen w-full overflow-hidden bg-[#0a0a0a] text-zinc-300">
+    <div className="flex flex-col h-screen w-full overflow-hidden bg-transparent text-text-secondary">
       <ProblemHeader
         problem={problem}
         language={language}
@@ -158,7 +158,7 @@ export default function ProblemSolvingPage() {
             <DescriptionPanel problem={problem} />
           </ResizablePanel>
 
-          <ResizableHandle className="w-1 bg-[#0a0a0a] hover:bg-emerald-500/50 transition-colors" />
+          <ResizableHandle className="w-1 bg-(--resizable-handle) hover:bg-emerald-500/50 transition-colors" />
 
           {/* Right Pane: Editor & Console */}
           <ResizablePanel defaultSize={isAIPanelOpen ? 45 : 60} minSize={30}>
@@ -173,7 +173,7 @@ export default function ProblemSolvingPage() {
                 />
               </ResizablePanel>
 
-              <ResizableHandle className="h-1 bg-[#0a0a0a] hover:bg-emerald-500/50 transition-colors" />
+              <ResizableHandle className="h-1 bg-[var(--resizable-handle)] hover:bg-emerald-500/50 transition-colors" />
 
               {/* Console */}
               <ResizablePanel defaultSize={30} minSize={10}>
@@ -198,7 +198,7 @@ export default function ProblemSolvingPage() {
 
           {isAIPanelOpen && (
             <>
-              <ResizableHandle className="w-1 bg-[#0a0a0a] hover:bg-emerald-500/50 transition-colors" />
+              <ResizableHandle className="w-1 bg-[var(--resizable-handle)] hover:bg-emerald-500/50 transition-colors" />
               <ResizablePanel defaultSize={20} minSize={15}>
                 <AICodingPanel
                   code={code}

@@ -7,7 +7,7 @@ import contextlib
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routes import auth, health, problems, submissions, submit, topics
+from api.routes import auth, health, problems, submissions, submit, topics, tools
 from api.websocket import router as ws_router
 from config.settings import get_allowed_origins
 from api.agent import server
@@ -45,6 +45,7 @@ def create_app() -> FastAPI:
     app.include_router(submissions.router, tags=["submissions"], prefix="/api")
     app.include_router(problems.router, tags=["problems"], prefix="/api/problems")
     app.include_router(topics.router, tags=["topics"], prefix="/api/topics")
+    app.include_router(tools.router, tags=["tools"], prefix="/api/tools")
     app.include_router(auth.router, tags=["auth"], prefix="/api/auth")
     app.include_router(ws_router, tags=["websocket"], prefix="/api")
     app.include_router(health.router, tags=["health"], prefix="/api")

@@ -35,19 +35,19 @@ export function ConsolePanel({
   onSubmit,
 }: ConsolePanelProps) {
   return (
-    <div className="h-full flex flex-col no-scrollbar" style={{ background: "#0c0c0e" }}>
+    <div className="h-full flex flex-col no-scrollbar">
       <Tabs value={activeTab} onValueChange={onTabChange} className="flex-1 flex flex-col min-h-0">
         {/* Tab bar */}
         <div
           className="flex items-center justify-between px-3 shrink-0 border-b"
           style={{
             height: "41px",
-            borderColor: "rgba(255,255,255,0.06)",
-            background: "rgba(255,255,255,0.02)",
+            borderColor: "var(--border-subtle)",
+            background: "var(--panel-header-tint)",
           }}
         >
           <TabsList
-            className="flex items-center gap-0.5 bg-transparent border-0 p-0 h-auto"
+            className="flex items-center gap-0 bg-transparent border-0 p-0 h-auto"
           >
             {[
               { value: "testcases", label: "Testcases", icon: FlaskConical },
@@ -56,12 +56,10 @@ export function ConsolePanel({
               <TabsTrigger
                 key={value}
                 value={value}
-                className="relative flex items-center gap-1.5 h-8 px-3 rounded-lg text-[11px] font-semibold tracking-wide border-0 transition-all
-                  text-zinc-500
+                className="corner-accents cursor-pointer relative flex items-center gap-1.5 h-8 px-3 rounded-lg text-[11px] font-semibold tracking-wide border-0 transition-all
+                  text-text-tertiary
                   data-[state=active]:text-emerald-400
-                  data-[state=active]:bg-emerald-500/10
-                  hover:text-zinc-300
-                  hover:bg-white/5"
+                  "
               >
                 <Icon className="h-3 w-3" />
                 {label}
@@ -74,35 +72,38 @@ export function ConsolePanel({
             <button
               onClick={onRun}
               disabled={isSubmitting}
-              className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-[11px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all disabled:opacity-40"
+              className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-[11px] font-bold uppercase tracking-wider text-text-tertiary hover:text-text-primary hover-langfuse border border-transparent hover:border-border-subtle transition-all disabled:opacity-40"
             >
               <Play className="h-3 w-3" />
               Run
             </button>
-            <button
-              onClick={onSubmit}
-              disabled={isSubmitting}
-              className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-[11px] font-bold uppercase tracking-wider text-white transition-all disabled:opacity-60"
-              style={{
-                background: isSubmitting
-                  ? "rgba(5,150,105,0.4)"
-                  : "linear-gradient(135deg, #059669 0%, #047857 100%)",
-                boxShadow: isSubmitting ? "none" : "0 0 12px rgba(5,150,105,0.25)",
-              }}
-            >
-              {isSubmitting ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <Send className="h-3 w-3" />
-              )}
-              Submit
-            </button>
+            <div className="p-0.5 hover-langfuse">
+              <button
+                onClick={onSubmit}
+                disabled={isSubmitting}
+                className="cursor-pointer flex items-center gap-1.5 h-7 px-3 rounded-lg text-[11px] font-bold uppercase tracking-wider text-white transition-all disabled:opacity-60"
+                style={{
+                  background: isSubmitting
+                    ? "var(--muted-foreground)"
+                    : "var(--primary)",
+                  boxShadow: isSubmitting ? "none" : "0 0 12px rgba(0,0,0,0.1)",
+                  color: "var(--primary-foreground)"
+                }}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Send className="h-3 w-3" />
+                )}
+                Submit
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Content */}
         <div className="flex-1 min-h-0 relative">
-          <div className="absolute inset-0 overflow-y-auto no-scrollbar">
+          <div className="absolute inset-0 overflow-y-auto no-scrollbar bg-background">
             <TabsContent value="testcases" className="m-0 p-4 space-y-4">
               <TestcasesPanel
                 problem={problem}

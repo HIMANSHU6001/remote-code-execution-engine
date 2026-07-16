@@ -7,7 +7,7 @@ export function proxy(request: NextRequest) {
   const isVerifyPage = request.nextUrl.pathname.startsWith('/verify-email');
 
   if (!token && !isAuthPage && !isVerifyPage) {
-    return NextResponse.redirect(new URL('/auth', request.url));
+    return NextResponse.redirect(new URL('/auth/signin', request.url));
   }
 
   if (token && isAuthPage) {
@@ -25,7 +25,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - all static files with image extensions (svg, png, jpg, etc.)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

@@ -1,6 +1,9 @@
 // EditorPanel.tsx
+"use client";
+
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import { useTheme } from "@/context/ThemeContext";
 
 const Editor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
@@ -27,20 +30,21 @@ export function EditorPanel({
   onCodeChange,
   onEditorMount,
 }: EditorPanelProps) {
+  const { isDark } = useTheme();
+
   return (
-    <div className="h-full flex flex-col" style={{ background: "#0c0c0e" }}>
+    <div className="h-full flex flex-col" >
       {/* Header */}
       <div
         className="flex items-center justify-between px-4 shrink-0 border-b"
         style={{
           height: "41px",
-          borderColor: "rgba(255,255,255,0.06)",
-          background: "rgba(255,255,255,0.02)",
+          borderColor: "var(--border-subtle)",
+          background: "var(--panel-header-tint)",
         }}
       >
         <div className="flex items-center gap-2.5">
-          <Image src="/codespace_logo.svg" alt="Logo" width={16} height={16} />
-          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-400">
+          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-text-tertiary">
             Editor
           </span>
         </div>
@@ -54,7 +58,7 @@ export function EditorPanel({
           value={code}
           onMount={onEditorMount}
           onChange={(v) => onCodeChange(v || "")}
-          theme="vs-dark"
+          theme={isDark ? "vs-dark" : "light"}
           options={{
             minimap: { enabled: false },
             fontSize: 13.5,

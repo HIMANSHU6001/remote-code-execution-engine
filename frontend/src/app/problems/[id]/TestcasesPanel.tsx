@@ -18,10 +18,9 @@ export function TestcasesPanel({
     <div className="space-y-4">
       {/* Case tabs */}
       <div
-        className="flex gap-1.5 flex-wrap p-1.5 rounded-xl"
+        className="flex gap-1.5 flex-wrap p-1.5"
         style={{
-          background: "rgba(255,255,255,0.02)",
-          border: "1px solid rgba(255,255,255,0.06)",
+          border: "1px solid var(--border-subtle)",
         }}
       >
         {(problem.sample_test_cases || []).map((_, i) => {
@@ -30,7 +29,7 @@ export function TestcasesPanel({
             <button
               key={i}
               onClick={() => onCaseChange(i)}
-              className="h-7 px-3 rounded-lg text-xs font-semibold transition-all"
+              className="h-7 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer hover-langfuse"
               style={
                 isActive
                   ? {
@@ -39,9 +38,9 @@ export function TestcasesPanel({
                     color: "#34d399",
                   }
                   : {
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    color: "#71717a",
+                    background: "var(--tag-bg)",
+                    border: "1px solid var(--tag-border)",
+                    color: "var(--text-tertiary)",
                   }
               }
             >
@@ -57,16 +56,16 @@ export function TestcasesPanel({
           <div className="space-y-1.5">
             <p
               className="text-[10px] font-bold uppercase tracking-[0.12em]"
-              style={{ color: "#52525b" }}
+              style={{ color: "var(--text-muted)" }}
             >
               Input
             </p>
             <pre
               className="p-3 rounded-xl font-mono text-xs leading-relaxed overflow-x-auto"
               style={{
-                background: "#111113",
-                border: "1px solid rgba(255,255,255,0.07)",
-                color: "#a1a1aa",
+                background: "var(--code-bg)",
+                border: "1px solid var(--code-border)",
+                color: "var(--text-secondary)",
               }}
             >
               {activeSampleCase.input_data}
@@ -76,16 +75,16 @@ export function TestcasesPanel({
           <div className="space-y-1.5">
             <p
               className="text-[10px] font-bold uppercase tracking-[0.12em]"
-              style={{ color: "#52525b" }}
+              style={{ color: "var(--text-muted)" }}
             >
               Expected Output
             </p>
             <pre
               className="p-3 rounded-xl font-mono text-xs leading-relaxed overflow-x-auto"
               style={{
-                background: "#111113",
-                border: "1px solid rgba(255,255,255,0.07)",
-                color: "#a1a1aa",
+                background: "var(--code-bg)",
+                border: "1px solid var(--code-border)",
+                color: "var(--text-secondary)",
               }}
             >
               {activeSampleCase.expected_output}

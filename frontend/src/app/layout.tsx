@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 
-const poppins = {
-  variable: "--font-poppins",
-};
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-poppins", // Reusing the variable name to minimize css changes
+});
 
 const jetbrainsMono = {
   variable: "--font-mono",
@@ -25,22 +28,25 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${poppins.variable} ${jetbrainsMono.variable} h-full antialiased dark`}
+      className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased dark`}
+      suppressHydrationWarning
     >
-      <body className="h-screen w-full overflow-hidden bg-[#0a0a0a] text-slate-200 font-sans">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
-        <Toaster
-          position="bottom-right"
-          toastOptions={{
-            style: {
-              background: '#18181b',
-              color: '#fff',
-              border: '1px solid #27272a',
-            },
-          }}
-        />
+      <body className="h-screen w-full overflow-hidden text-text-primary font-sans">
+        <ThemeProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+          <Toaster
+            position="bottom-right"
+            toastOptions={{
+              style: {
+                background: 'var(--toast-bg)',
+                color: 'var(--toast-color)',
+                border: '1px solid var(--toast-border)',
+              },
+            }}
+          />
+        </ThemeProvider>
       </body>
     </html>
   );

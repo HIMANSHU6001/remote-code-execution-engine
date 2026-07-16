@@ -31,9 +31,9 @@ active_connections: dict[str, WebSocket] = {}
 async def _send_json(ws: WebSocket, payload: dict[str, Any]) -> None:
     await ws.send_text(json.dumps(payload))
 
-@router.websocket("/ws/analyze")
-async def ws_analyze(websocket: WebSocket):
-    print("CONNECTED on /ws/analyze", flush=True)
+@router.websocket("/ws/analyze/{session_id}")
+async def ws_analyze(websocket: WebSocket, session_id: str):
+    print(f"CONNECTED on /ws/analyze/{session_id}", flush=True)
     await websocket.accept()
     
     redis_client = await get_async_redis()
@@ -41,216 +41,47 @@ async def ws_analyze(websocket: WebSocket):
 
     async def safe_send(payload: dict[str, Any]) -> bool:
         try:
+            print(f"Sending payload to WS: {payload}", flush=True)
             await websocket.send_json(payload)
             return True
-        except (WebSocketDisconnect, RuntimeError):
+        except (WebSocketDisconnect, RuntimeError) as e:
+            print(f"Failed to send WS payload: {e}", flush=True)
             return False
 
     try:
+        # Subscribe to the specific session channel and the fallback empty channel
+        print(f"Subscribing to Redis channel: session:{session_id}", flush=True)
+        await pubsub.subscribe(f"session:{session_id}")
+        print(f"Subscribing to Redis channel: session:", flush=True)
+        await pubsub.subscribe("session:")
+
+        # The new architecture only uses this WebSocket to forward Redis commands (like highlights)
+        # to the frontend, because Lamatic handles the LLM processing over REST.
         while True:
-            # 1. Wait for message from frontend
             try:
-                init_data = await websocket.receive_json()
-            except WebSocketDisconnect:
-                print("Client disconnected during receive_json")
-                break
-            
-            s_id = init_data.get("session_id", "unknown")
-            
-            history = init_data.get("history", [])
-            raw_history = init_data.get("history", [])
-            code = init_data.get("code", "")
-            current_hash = init_data.get("hash", "")
-            run_id = init_data.get("run_id")
-
-            print(f"Processing request for session: {s_id}")
-
-            sanitized_history = []
-            for i, msg in enumerate(raw_history):
-                # If we find an assistant message that attempted to call a tool...
-                if msg.get("role") == "assistant" and msg.get("tool_calls"):
-                    # Check if the immediately following message is the tool's response
-                    if i + 1 < len(raw_history) and raw_history[i+1].get("role") == "tool":
-                        sanitized_history.append(msg)
-                    else:
-                        # Orphaned tool call detected! The WS dropped before the tool finished.
-                        # Drop this message to prevent the OpenAI 400 error.
-                        print(f"Dropped orphaned tool call for session {s_id}")
-                        continue 
-                else:
-                    sanitized_history.append(msg)
-            # Add line numbers to the code block for accuracy
-            numbered_lines = [f"{i+1}: {l}" for i, l in enumerate(code.split('\n'))]
-            numbered_code = "\n".join(numbered_lines)
-
-            # Inject the Context Anchor
-            history_with_context = [
-                {
-                    "role": "system", 
-                    "content": (
-                        f"You are a Coding tutor. The user's current code (with line numbers) is:\n\n```\n{numbered_code}\n```\n\n"
-                        f"IMPORTANT CONTEXT for tools:\n"
-                        f"- session_id: {s_id}\n"
-                        f"- hash: {current_hash}\n"
-                        f"- run_id: {run_id if run_id else 'None'}\n\n"
-                        "Use these exact values as arguments when calling `emit_editor_annotation` or `fetch_execution_state`.\n"
-                        "Note: When using `emit_editor_annotation`, use the 1-indexed line numbers shown in the code block above.\n"
-                        "DO NOT include any of these technical values (session_id, hash, run_id, etc.) in your text response to the user."
-                    )
-                }
-            ] + sanitized_history
-
-
-            # Subscribe to the event bus
-            await pubsub.subscribe(f"session:{s_id}")
-
-            async def stream_llm(session_id, h, r_id, history_ctx):
-                result = Runner.run_streamed(
-                    agent, 
-                    history_ctx, 
-                    context={"session_id": session_id, "hash": h, "run_id": r_id}
-                )
-                
-                in_speak_block = False
-                buffer = ""
-                sent_any_text = False
-
-                try:
-                    async for event in result.stream_events():
-                        # Handle Guardrail Trigger emitted as an event
-                        if event.type == "input_guardrail_triggered_event":
-                            reason = "Your input was blocked because it isn't a coding-related question."
-                            if hasattr(event.data, "output_info") and event.data.output_info:
-                                reason = str(event.data.output_info)
-                                
-                            if not await safe_send({
-                                "t": "guardrail",
-                                "error": "Input blocked by guardrail",
-                                "message": reason,
-                            }):
-                                return
+                async for message in pubsub.listen():
+                    if message["type"] == "message":
+                        event_data = json.loads(message["data"])
+                        print(f"Received Redis message: {event_data}", flush=True)
+                        if not await safe_send(event_data):
                             return
-
-                        if event.type == "raw_response_event" and hasattr(event.data, "delta"):
-                            delta = event.data.delta
-                            if getattr(delta, "tool_calls", None):
-                                continue
-                            
-                            content = delta if isinstance(delta, str) else getattr(delta, "content", None)
-                            
-                            if content:
-                                buffer += content
-                                
-                                if not in_speak_block:
-                                    if "<speak>" in buffer:
-                                        in_speak_block = True
-                                        parts = buffer.split("<speak>", 1)
-                                        buffer = parts[1]
-                                    else:
-                                        if len(buffer) > 7:
-                                            buffer = buffer[-7:]
-                                        continue
-
-                                if in_speak_block:
-                                    if "</speak>" in buffer:
-                                        parts = buffer.split("</speak>", 1)
-                                        clean_text = parts[0]
-                                        if clean_text:
-                                            if not await safe_send({"t": "text", "v": clean_text}):
-                                                return
-                                            sent_any_text = True
-                                        buffer = parts[1]
-                                        in_speak_block = False
-                                    else:
-                                        if len(buffer) > 8:
-                                            to_send = buffer[:-8]
-                                            if to_send:
-                                                if not await safe_send({"t": "text", "v": to_send}):
-                                                    return
-                                                sent_any_text = True
-                                            buffer = buffer[-8:]
-
-                except InputGuardrailTripwireTriggered as e:
-                    # (You can remove the timing print from inside here)
-                    # Some runner implementations raise an exception when the guardrail trips.
-                    reason = "Your input was blocked because it isn't a coding-related question."
-                    
-                    # Try to get the reasoning from the exception
-                    if hasattr(e, "output_info") and e.output_info:
-                        reason = str(e.output_info)
-                    elif hasattr(e, "data") and hasattr(e.data, "output_info") and e.data.output_info:
-                        reason = str(e.data.output_info)
-                    
-                    if not await safe_send({
-                        "t": "guardrail",
-                        "error": "Input blocked by guardrail",
-                        "message": reason,
-                    }):
-                        return
-                    return
-
-                # Final flush
-                if in_speak_block and buffer:
-                    if "</speak>" in buffer:
-                        buffer = buffer.split("</speak>", 1)[0]
-                    if buffer:
-                        if not await safe_send({"t": "text", "v": buffer}):
-                            return
-                        sent_any_text = True
-
-            async def stream_redis_events():
-                while True:
-                    try:
-                        async for message in pubsub.listen():
-                            if message["type"] == "message":
-                                event_data = json.loads(message["data"])
-                                if not await safe_send(event_data):
-                                    return
-                    except (asyncio.TimeoutError, redis.exceptions.TimeoutError):
-                        # Suppress Redis read timeouts if channel is idle, just continue listening
-                        continue
-                    except Exception:
-                        # For connection drops or other errors, exit
-                        break
-
-            # Multiplexing this specific interaction
-            task_a = asyncio.create_task(stream_llm(s_id, current_hash, run_id, history_with_context))
-            task_b = asyncio.create_task(stream_redis_events())
-            
-            try:
-                done, pending = await asyncio.wait({task_a, task_b}, return_when=asyncio.FIRST_COMPLETED)
-
-                for task in done:
-                    with contextlib.suppress(asyncio.CancelledError, WebSocketDisconnect, RuntimeError):
-                        task.result()
-            finally:
-                for task in (task_a, task_b):
-                    if not task.done():
-                        task.cancel()
-
-                with contextlib.suppress(asyncio.CancelledError):
-                    await asyncio.gather(task_a, task_b)
-
-                with contextlib.suppress(Exception):
-                    await pubsub.unsubscribe(f"session:{s_id}")
-            
-            if not await safe_send({"t": "sys", "action": "GENERATION_COMPLETE"}):
+            except (asyncio.TimeoutError, redis.exceptions.TimeoutError):
+                # Suppress Redis read timeouts if channel is idle
+                continue
+            except Exception as e:
+                # Connection dropped
+                print(f"Redis listen error: {e}", flush=True)
                 break
 
     except Exception as e:
-        print(f"Error in WS loop: {str(e)}")
+        print(f"Error in WS loop: {str(e)}", flush=True)
         import traceback
         traceback.print_exc()
-        with contextlib.suppress(Exception):
-            await websocket.send_json({
-                "t": "error", 
-                "message": "An unexpected server error occurred during analysis."
-            })
-            await websocket.send_json({"t": "sys", "action": "GENERATION_COMPLETE"})
     finally:
         with contextlib.suppress(Exception):
+            await pubsub.unsubscribe()
             await pubsub.close()
-        print("WebSocket connection closed and cleaned up")
+        print("WebSocket connection closed and cleaned up", flush=True)
 
 @router.websocket("/ws/{job_id}")
 async def websocket_endpoint(ws: WebSocket, job_id: uuid.UUID, token: str) -> None:

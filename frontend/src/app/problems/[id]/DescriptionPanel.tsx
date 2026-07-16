@@ -35,46 +35,46 @@ export function DescriptionPanel({ problem }: DescriptionPanelProps) {
   return (
     <div
       className="h-full flex flex-col no-scrollbar overflow-y-auto"
-      style={{ background: "#0c0c0e" }}
+      style={{ background: "var(--surface-secondary)" }}
     >
       {/* Sticky header */}
       <div
         className="flex items-center justify-between px-4 shrink-0 sticky top-0 z-10 border-b"
         style={{
           height: "41px",
-          background: "rgba(12,12,14,0.9)",
+          background: "var(--panel-header-bg)",
           backdropFilter: "blur(12px)",
-          borderColor: "rgba(255,255,255,0.06)",
+          borderColor: "var(--border-subtle)",
         }}
       >
         <div className="flex items-center gap-2.5">
           <div className="w-5 h-5 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
             <BookOpen className="h-3 w-3 text-emerald-400" />
           </div>
-          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-400">
+          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-text-tertiary">
             Problem
           </span>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
-            <Cpu className="h-3 w-3 text-zinc-600" />
-            <span className="text-[11px] text-zinc-600 font-mono">{problem.base_time_limit_ms}ms</span>
+            <Cpu className="h-3 w-3 text-text-muted" />
+            <span className="text-[11px] text-text-muted font-mono">{problem.base_time_limit_ms}ms</span>
           </div>
           <div
             className="w-px h-3"
-            style={{ background: "rgba(255,255,255,0.08)" }}
+            style={{ background: "var(--divider)" }}
           />
           <div className="flex items-center gap-1.5">
-            <Database className="h-3 w-3 text-zinc-600" />
-            <span className="text-[11px] text-zinc-600 font-mono">{problem.base_memory_limit_mb}MB</span>
+            <Database className="h-3 w-3 text-text-muted" />
+            <span className="text-[11px] text-text-muted font-mono">{problem.base_memory_limit_mb}MB</span>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="px-6 py-8 max-w-2xl mx-auto w-full">
+      <div className="px-6 py-8 max-w-2xl mx-auto w-full bg-background">
         {/* Title */}
-        <h1 className="text-2xl font-bold text-white tracking-tight mb-4 leading-snug">
+        <h1 className="text-2xl font-bold text-text-primary tracking-tight mb-4 leading-snug">
           {problem.title}
         </h1>
 
@@ -90,7 +90,7 @@ export function DescriptionPanel({ problem }: DescriptionPanelProps) {
           {(problem.topics?.length ?? 0) > 0 && (
             <div
               className="w-px h-3.5"
-              style={{ background: "rgba(255,255,255,0.1)" }}
+              style={{ background: "var(--divider)" }}
             />
           )}
 
@@ -99,17 +99,9 @@ export function DescriptionPanel({ problem }: DescriptionPanelProps) {
               key={t.id}
               className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors cursor-default"
               style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.07)",
-                color: "#71717a",
-              }}
-              onMouseEnter={(e) => {
-                (e.target as HTMLElement).style.background = "rgba(255,255,255,0.07)";
-                (e.target as HTMLElement).style.color = "#a1a1aa";
-              }}
-              onMouseLeave={(e) => {
-                (e.target as HTMLElement).style.background = "rgba(255,255,255,0.04)";
-                (e.target as HTMLElement).style.color = "#71717a";
+                background: "var(--tag-bg)",
+                border: "1px solid var(--tag-border)",
+                color: "var(--text-tertiary)",
               }}
             >
               {t.name}
@@ -118,20 +110,20 @@ export function DescriptionPanel({ problem }: DescriptionPanelProps) {
         </div>
 
         {/* Divider */}
-        <div className="mb-6" style={{ height: "1px", background: "rgba(255,255,255,0.05)" }} />
+        <div className="mb-6" style={{ height: "1px", background: "var(--divider)" }} />
 
         {/* Description */}
         <div
           className="prose prose-sm max-w-none"
           style={
             {
-              "--tw-prose-body": "#a1a1aa",
-              "--tw-prose-headings": "#e4e4e7",
-              "--tw-prose-strong": "#e4e4e7",
-              "--tw-prose-code": "#d4d4d8",
-              "--tw-prose-links": "#a1a1aa",
-              "--tw-prose-bullets": "#52525b",
-              "--tw-prose-counters": "#52525b",
+              "--tw-prose-body": "var(--text-secondary)",
+              "--tw-prose-headings": "var(--text-primary)",
+              "--tw-prose-strong": "var(--text-primary)",
+              "--tw-prose-code": "var(--code-text)",
+              "--tw-prose-links": "var(--text-secondary)",
+              "--tw-prose-bullets": "var(--text-muted)",
+              "--tw-prose-counters": "var(--text-muted)",
               lineHeight: "1.75",
             } as React.CSSProperties
           }
@@ -145,13 +137,13 @@ export function DescriptionPanel({ problem }: DescriptionPanelProps) {
                 ) : (
                   <code
                     style={{
-                      background: "rgba(255,255,255,0.06)",
-                      color: "#d4d4d8",
+                      background: "var(--code-bg)",
+                      color: "var(--code-text)",
                       padding: "1px 6px",
                       borderRadius: "4px",
                       fontSize: "0.85em",
                       fontFamily: "var(--font-mono, monospace)",
-                      border: "1px solid rgba(255,255,255,0.1)",
+                      border: "1px solid var(--code-border)",
                     }}
                   >
                     {children}
@@ -160,8 +152,8 @@ export function DescriptionPanel({ problem }: DescriptionPanelProps) {
               pre: ({ children }) => (
                 <pre
                   style={{
-                    background: "#111113",
-                    border: "1px solid rgba(255,255,255,0.07)",
+                    background: "var(--surface-elevated)",
+                    border: "1px solid var(--code-border)",
                     borderRadius: "10px",
                     padding: "14px 16px",
                     overflowX: "auto",
@@ -176,10 +168,10 @@ export function DescriptionPanel({ problem }: DescriptionPanelProps) {
               blockquote: ({ children }) => (
                 <blockquote
                   style={{
-                    borderLeft: "3px solid rgba(255,255,255,0.12)",
+                    borderLeft: "3px solid var(--border-primary)",
                     paddingLeft: "14px",
                     margin: "12px 0",
-                    color: "#71717a",
+                    color: "var(--text-tertiary)",
                     fontStyle: "italic",
                   }}
                 >
@@ -198,17 +190,17 @@ export function DescriptionPanel({ problem }: DescriptionPanelProps) {
             <div className="flex items-center gap-2 mb-4">
               <div
                 className="h-px flex-1"
-                style={{ background: "rgba(255,255,255,0.05)" }}
+                style={{ background: "var(--divider)" }}
               />
               <div className="flex items-center gap-1.5">
                 <HelpCircle className="h-3.5 w-3.5 text-amber-500/70" />
-                <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-600">
+                <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-text-muted">
                   Hints
                 </span>
               </div>
               <div
                 className="h-px flex-1"
-                style={{ background: "rgba(255,255,255,0.05)" }}
+                style={{ background: "var(--divider)" }}
               />
             </div>
 
